@@ -57,3 +57,29 @@ Importa el archivo SQL incluido en el proyecto (tinkuy_db.sql).
 Ajusta los datos de conexión en:
 
 assets/admin/db.php
+Paso 4 — Probar el proyecto
+
+Ejecuta tu servidor local (XAMPP o similar) y abre en el navegador:
+
+http://localhost/Ecommerce-Tinkuy/
+
+
+Ya deberías ver la tienda funcionando, con:
+
+Login de usuarios y administradores
+
+Recuperación de contraseña (vía Mailtrap)
+
+Simulación de pasarela de pagos
+
+Gestión de pedidos y perfiles
+
+🧩 Paso 5 — (Opcional) Configurar Mailtrap
+
+Si deseas probar el envío de correos (simulado), crea una cuenta en:
+
+👉 https://mailtrap.io
+
+Luego copia tus credenciales SMTP y colócalas en:
+
+assets/admin/mailer_config.php
