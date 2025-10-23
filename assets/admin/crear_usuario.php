@@ -21,29 +21,25 @@ $mensaje_exito = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // --- INICIO DE VALIDACIÓN MEJORADA ---
-    // 1. Verificamos que los campos existan antes de usarlos
     $usuario_raw = $_POST['usuario'] ?? null;
     $email_raw = $_POST['email'] ?? null;
-    $clave = $_POST['clave'] ?? null; // Clave no se trimea
+    $clave = $_POST['clave'] ?? null; 
     $id_rol = isset($_POST['id_rol']) ? (int)$_POST['id_rol'] : 0;
     $nombres_raw = $_POST['nombres'] ?? null;
     $apellidos_raw = $_POST['apellidos'] ?? null;
-    $telefono_raw = $_POST['telefono'] ?? ''; // Teléfono es opcional, puede ser vacío
+    $telefono_raw = $_POST['telefono'] ?? ''; 
 
-    // 2. Limpiamos los espacios en blanco (trim)
     $usuario = is_string($usuario_raw) ? trim($usuario_raw) : null;
     $email = is_string($email_raw) ? trim($email_raw) : null;
     $nombres = is_string($nombres_raw) ? trim($nombres_raw) : null;
     $apellidos = is_string($apellidos_raw) ? trim($apellidos_raw) : null;
     $telefono = is_string($telefono_raw) ? trim($telefono_raw) : '';
     
-    // 3. Validaciones de Calidad (Seguridad y Usabilidad)
-    // Primero, verificamos que ningún campo obligatorio sea NULL o vacío DESPUÉS de trim()
+    // Validaciones de Calidad
     if ($usuario === null || $email === null || $clave === null || $id_rol === 0 || $nombres === null || $apellidos === null || 
         $usuario === '' || $email === '' || $clave === '' || $nombres === '' || $apellidos === '') {
         $mensaje_error = "Todos los campos (excepto teléfono) son obligatorios.";
     } 
-    // Luego, las validaciones específicas
     elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $mensaje_error = "El formato del email no es válido.";
     } elseif (!preg_match('/^[a-zA-Z\sñáéíóúÁÉÍÓÚ]+$/u', $nombres) || !preg_match('/^[a-zA-Z\sñáéíóúÁÉÍÓÚ]+$/u', $apellidos)) {
@@ -57,7 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     else {
         // --- Lógica de Base de Datos (Transacción) ---
-        // (Esta parte es la misma que antes)
         $clave_hash = password_hash($clave, PASSWORD_DEFAULT);
         
         $conn->begin_transaction();
@@ -66,9 +61,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt_usuario = $conn->prepare(
                 "INSERT INTO usuarios (id_rol, usuario, email, clave_hash) VALUES (?, ?, ?, ?)"
             );
+
+            // --- INICIO DE CORRECCIÓN (DEPURACIÓN) ---
+            // Verificamos si prepare() falló y mostramos el error de MySQL
+            if ($stmt_usuario === false) {
+                 // Usamos $conn->error para ver el mensaje de MySQL
+                throw new mysqli_sql_exception("Error al preparar la consulta de usuarios: " . $conn->error);
+            }
+            // --- FIN DE CORRECCIÓN (DEPURACIÓN) ---
+
             // Aseguramos pasar el $email validado y no nulo
-            $stmt_usuario->bind_param("isss", $id_rol, $usuario, $email, $clave_hash);
-            $stmt_usuario->execute(); // Esta es la línea 57 del error original
+            $stmt_usuario->bind_param("isss", $id_rol, $usuario, $email, $clave_hash); // <-- Esta es la línea 57
+            $stmt_usuario->execute(); 
             
             $nuevo_usuario_id = $conn->insert_id;
 
@@ -76,6 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt_perfil = $conn->prepare(
                 "INSERT INTO perfiles (id_usuario, nombres, apellidos, telefono) VALUES (?, ?, ?, ?)"
             );
+             if ($stmt_perfil === false) { // Verificación adicional
+                 throw new mysqli_sql_exception("Error al preparar la consulta de perfiles: " . $conn->error);
+            }
             $telefono_a_insertar = !empty($telefono) ? $telefono : NULL;
             $stmt_perfil->bind_param("isss", $nuevo_usuario_id, $nombres, $apellidos, $telefono_a_insertar);
             $stmt_perfil->execute();
@@ -104,5 +111,4 @@ $roles = $resultado_roles->fetch_all(MYSQLI_ASSOC);
 
 <?php
 // --- El resto del archivo (<!DOCTYPE html>...) sigue igual ---
-// No necesitas cambiar el HTML
 ?>
