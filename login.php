@@ -1,44 +1,74 @@
 <?php
 session_start();
-include 'assets/admin/db.php';
+// Incluimos la conexión a la BD
+include 'assets/admin/db.php'; 
 
 $mensaje_error = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $usuario = $_POST['usuario'];
+    $usuario = trim($_POST['usuario']);
     $clave = $_POST['clave'];
 
-    $stmt = $conn->prepare("SELECT id, usuario, clave, rol FROM usuarios WHERE usuario = ?");
-    $stmt->bind_param("s", $usuario);
-    $stmt->execute();
-    $stmt->store_result();
+    // --- INICIO DE VALIDACIÓN DE CALIDAD ---
+    
+    // 1. Validamos el formato del input ANTES de consultar la BD.
+    // Misma regex que usamos en register.php
+    if (empty($usuario) || empty($clave)) {
+         $mensaje_error = "Por favor, ingresa tu usuario y contraseña.";
+    } elseif (!preg_match('/^[a-zA-Z0-9_-]+$/', $usuario)) {
+        $mensaje_error = "Formato de usuario no válido.";
+    } 
+    // --- FIN DE VALIDACIÓN DE CALIDAD ---
+    
+    else { 
+        // Si el formato es válido, procedemos a consultar la BD
 
-    if ($stmt->num_rows === 1) {
-        $stmt->bind_result($id_db, $usuario_db, $clave_db, $rol_db);
-        $stmt->fetch();
+        // 1. Hacemos un JOIN con la tabla 'roles' para obtener el 'nombre_rol'
+        $query = "SELECT u.id_usuario, u.usuario, u.clave_hash, r.nombre_rol 
+                  FROM usuarios AS u
+                  JOIN roles AS r ON u.id_rol = r.id_rol
+                  WHERE u.usuario = ?";
+        
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("s", $usuario);
+        $stmt->execute();
+        $stmt->store_result();
 
-        if (password_verify($clave, $clave_db)) {
-            $_SESSION['usuario_id'] = $id_db;
-            $_SESSION['usuario'] = $usuario_db;
-            $_SESSION['rol'] = $rol_db;
+        if ($stmt->num_rows === 1) {
+            // 2. Vinculamos a las nuevas variables (con los nuevos nombres de columna)
+            $stmt->bind_result($id_db, $usuario_db, $clave_hash_db, $nombre_rol_db);
+            $stmt->fetch();
 
-            if ($rol_db === 'admin') {
-                header("Location: assets/admin/dashboard.php");
-            } elseif ($rol_db === 'vendedor') {
-                header("Location: assets/vendedor/dashboard.php");
+            // 3. Verificamos la contraseña contra la columna 'clave_hash'
+            if (password_verify($clave, $clave_hash_db)) {
+                
+                // 4. Guardamos los datos correctos en la sesión
+                $_SESSION['usuario_id'] = $id_db;
+                $_SESSION['usuario'] = $usuario_db;
+                $_SESSION['rol'] = $nombre_rol_db; // <-- Guardamos "admin", "vendedor", "cliente"
+
+                // 5. Redirección por rol a los dashboards
+                if ($nombre_rol_db === 'admin') {
+                    header("Location: assets/admin/dashboard.php");
+                } elseif ($nombre_rol_db === 'vendedor') {
+                    header("Location: assets/vendedor/dashboard.php");
+                } else {
+                    // Cualquier otro rol (como "cliente") va al index
+                    header("Location: index.php");
+                }
+                exit; // Importante terminar el script después de una redirección
+
             } else {
-                header("Location: index.php");
+                // Mensaje de error genérico por seguridad
+                $mensaje_error = "Usuario o contraseña incorrectos.";
             }
-
-            exit;
         } else {
-            $mensaje_error = "Contraseña incorrecta.";
+            // Mensaje de error genérico por seguridad
+            $mensaje_error = "Usuario o contraseña incorrectos.";
         }
-    } else {
-        $mensaje_error = "Usuario no encontrado.";
-    }
 
-    $stmt->close();
+        $stmt->close();
+    }
 }
 ?>
 
@@ -52,49 +82,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
     <style>
-        body {
-            background: linear-gradient(to bottom right, #f5f7fa, #c3cfe2);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .login-container {
-            max-width: 400px;
-            margin: auto;
-            animation: fadeIn 0.6s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .card {
-            border-radius: 15px;
-        }
-
-        .form-control:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
-        }
-
-        .login-icon {
-            font-size: 3rem;
-            color: #0d6efd;
-        }
+        body { background: linear-gradient(to bottom right, #f5f7fa, #c3cfe2); min-height: 100vh; display: flex; flex-direction: column; }
+        .login-container { max-width: 400px; margin: auto; animation: fadeIn 0.6s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .card { border-radius: 15px; }
+        .form-control:focus { border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25); }
+        .login-icon { font-size: 3rem; color: #0d6efd; }
     </style>
 </head>
 
 <body>
-    <?php include 'assets/component/navbar.php'; ?>
+    <?php include 'assets/component/navbar.php'; ?> 
 
     <main class="flex-grow-1 d-flex align-items-center justify-content-center">
         <div class="login-container">
@@ -107,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <?php if (!empty($mensaje_error)): ?>
-                        <div class="alert alert-danger"><?= $mensaje_error ?></div>
+                        <div class="alert alert-danger alert-error-animated"><?= htmlspecialchars($mensaje_error) ?></div>
                     <?php endif; ?>
 
                     <form method="POST" novalidate>
@@ -143,16 +141,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <hr class="my-4">
                     <p class="text-center mb-0">
-                        ¿No tienes cuenta? <a href="register.php">Regístrate aquí</a>
-                    </p>
+                        ¿No tienes cuenta? <a href="register.php">Regístrate aquí</a> </p>
                 </div>
             </div>
         </div>
     </main>
 
-    <?php include 'assets/component/footer.php'; ?>
+    <?php include 'assets/component/footer.php'; ?> 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

@@ -1,41 +1,61 @@
 <?php
 session_start();
-if (!isset($_SESSION['admin'])) {
-    header("Location: login.php");
-    exit();
+include 'db.php'; //
+
+// --- INICIO DE CALIDAD (SEGURIDAD ISO 25010) ---
+if (!isset($_SESSION['usuario_id'])) {
+    header('Location: ../../login.php'); //
+    exit;
+}
+if ($_SESSION['rol'] !== 'admin') {
+    header('Location: ../../login.php'); //
+    exit;
 }
 
-include 'db.php';
+// 1. Validamos el ID
+if (!isset($_GET['id']) || !filter_var($_GET['id'], FILTER_VALIDATE_INT)) {
+    $_SESSION['mensaje_error'] = "ID de usuario no válido.";
+    header('Location: usuarios.php'); //
+    exit;
+}
+$id_usuario_a_eliminar = (int)$_GET['id'];
 
-// ID del usuario a eliminar
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+// 2. Seguridad Crítica: Un admin NO puede eliminarse a sí mismo.
+if ($id_usuario_a_eliminar === $_SESSION['usuario_id']) {
+    $_SESSION['mensaje_error'] = "Error: No puedes eliminar tu propia cuenta de administrador.";
+    header('Location: usuarios.php'); //
+    exit;
+}
+// --- FIN DE CALIDAD (SEGURIDAD) ---
 
-// Obtener datos del usuario a eliminar
-$stmt = $conn->prepare("SELECT usuario FROM usuarios WHERE id = ?");
-$stmt->bind_param("i", $id);
-$stmt->execute();
-$resultado = $stmt->get_result();
 
-if ($resultado->num_rows === 1) {
-    $usuario = $resultado->fetch_assoc()['usuario'];
+// --- INICIO DE CALIDAD (FIABILIDAD ISO 25010) ---
+try {
+    // 3. Intentamos eliminar el usuario.
+    // NOTA: La BD (ON DELETE CASCADE) borrará 'perfiles' y 'direcciones'.
+    // NOTA: La BD (ON DELETE RESTRICT) fallará si el usuario tiene 'pedidos' o 'productos'.
+    
+    $stmt = $conn->prepare("DELETE FROM usuarios WHERE id_usuario = ?");
+    $stmt->bind_param("i", $id_usuario_a_eliminar);
+    $stmt->execute();
 
-    // Verificamos que no sea el admin logueado
-    if ($usuario === $_SESSION['admin']) {
-        // No puedes eliminarte a ti mismo
-        $_SESSION['mensaje_error'] = "No puedes eliminar tu propia cuenta.";
+    if ($stmt->affected_rows > 0) {
+        $_SESSION['mensaje_exito'] = "Usuario ID #$id_usuario_a_eliminar eliminado correctamente.";
     } else {
-        // Proceder a eliminar
-        $stmt = $conn->prepare("DELETE FROM usuarios WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        if ($stmt->execute()) {
-            $_SESSION['mensaje_exito'] = "Usuario eliminado correctamente.";
-        } else {
-            $_SESSION['mensaje_error'] = "Ocurrió un error al eliminar.";
-        }
+        throw new Exception("El usuario no se encontró o no se pudo eliminar.");
     }
-} else {
-    $_SESSION['mensaje_error'] = "Usuario no encontrado.";
+    
+} catch (mysqli_sql_exception $e) {
+    // 4. Manejo de Errores (Fiabilidad)
+    // Código 1451: Error de llave foránea (RESTRICT)
+    if ($e->getCode() == 1451) {
+        $_SESSION['mensaje_error'] = "Error: No se puede eliminar el usuario ID #$id_usuario_a_eliminar porque tiene pedidos o productos asociados. Primero debe reasignarlos o eliminarlos.";
+    } else {
+        $_SESSION['mensaje_error'] = "Error de base de datos: " . $e->getMessage();
+    }
 }
 
-header("Location: usuarios.php");
-exit();
+// 5. Redirigimos de vuelta a la lista
+header('Location: usuarios.php'); //
+exit;
+?>
