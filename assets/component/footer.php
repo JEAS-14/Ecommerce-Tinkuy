@@ -1,4 +1,4 @@
-<footer class="bg-dark text-white mt-5 pt-4 pb-3">
+<footer class="bg-dark text-white mt-auto pt-4 pb-3">
     <div class="container">
         <div class="row">
             <!-- Sección de marca -->
@@ -24,3 +24,20 @@
         </div>
     </div>
 </footer>
+
+<style>
+/* Mantiene el footer al fondo */
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
+}
+</style>

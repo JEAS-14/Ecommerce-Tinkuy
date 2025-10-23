@@ -32,8 +32,9 @@ $producto = $resultado_producto->fetch_assoc();
 
 
 // 3. Obtener TODAS las variantes disponibles para este producto
+// Agregamos 'imagen_variante' a la consulta SELECT.
 $stmt_variantes = $conn->prepare("
-    SELECT id_variante, talla, color, precio, stock
+    SELECT id_variante, talla, color, precio, stock, imagen_variante 
     FROM variantes_producto
     WHERE id_producto = ? AND stock > 0
     ORDER BY talla, color
@@ -48,12 +49,16 @@ while ($fila = $resultado_variantes->fetch_assoc()) {
 }
 
 // 4. Convertir las variantes a JSON para usarlas con JavaScript
-// Esto es para la magia de actualizar el precio en tiempo real
 $variantes_json = json_encode($variantes);
 
 $stmt_producto->close();
 $stmt_variantes->close();
 $conn->close();
+
+// Determinamos la imagen principal inicial
+$imagen_inicial = !empty($variantes) && !empty($variantes[0]['imagen_variante']) 
+                  ? htmlspecialchars($variantes[0]['imagen_variante']) 
+                  : htmlspecialchars($producto['imagen_principal']);
 
 ?>
 
@@ -68,13 +73,17 @@ $conn->close();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
 </head>
 
-<body>
+<body class="d-flex flex-column min-vh-100"> 
+
     <?php include 'assets/component/navbar.php'; ?>
 
-    <div class="container my-5">
+    <div class="container my-5 flex-grow-1"> 
         <div class="row">
             <div class="col-md-6">
-                <img src="assets/img/productos/<?php echo htmlspecialchars($producto['imagen_principal']); ?>" class="img-fluid rounded shadow-sm" alt="<?php echo htmlspecialchars($producto['nombre_producto']); ?>">
+                <img id="producto-imagen" 
+                     src="assets/img/productos/<?php echo $imagen_inicial; ?>" 
+                     class="img-fluid rounded shadow-sm" 
+                     alt="<?php echo htmlspecialchars($producto['nombre_producto']); ?>">
             </div>
 
             <div class="col-md-6">
@@ -125,7 +134,6 @@ $conn->close();
             </div>
         </div>
     </div>
-
     <?php include 'assets/component/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -140,6 +148,8 @@ $conn->close();
         const stockElemento = document.getElementById('stock-producto');
         const cantidadInput = document.getElementById('cantidad');
         const botonAgregar = document.getElementById('btn-agregar-carrito');
+        const imagenProducto = document.getElementById('producto-imagen'); 
+        const imagenProductoBase = '<?php echo $producto['imagen_principal']; ?>';
 
         // Escuchamos cambios en el <select>
         selectVariante.addEventListener('change', function() {
@@ -147,14 +157,22 @@ $conn->close();
             const idSeleccionado = this.value;
             const varianteElegida = variantes.find(v => v.id_variante == idSeleccionado);
             
+            // Definimos la ruta base para las imágenes
+            const pathBaseImg = 'assets/img/productos/';
+            
             if (varianteElegida) {
-                // Actualizamos el precio
+                // Actualizamos el precio y stock
                 precioElemento.textContent = 'S/ ' + parseFloat(varianteElegida.precio).toFixed(2);
-                
-                // Actualizamos el stock
                 stockElemento.textContent = 'Stock disponible: ' + varianteElegida.stock;
                 
-                // Actualizamos el 'max' del input de cantidad
+                // Actualizamos la imagen si la variante tiene una ruta
+                if (varianteElegida.imagen_variante) {
+                    imagenProducto.src = pathBaseImg + varianteElegida.imagen_variante;
+                } else {
+                    imagenProducto.src = pathBaseImg + imagenProductoBase;
+                }
+                
+                // Actualizamos el 'max' y valor del input de cantidad
                 cantidadInput.max = varianteElegida.stock;
                 if (cantidadInput.value > varianteElegida.stock) {
                     cantidadInput.value = varianteElegida.stock;
@@ -163,7 +181,7 @@ $conn->close();
                 // Habilitamos el botón de agregar
                 botonAgregar.disabled = false;
             } else {
-                // Si no hay nada seleccionado, reseteamos
+                // Reseteamos
                 precioElemento.textContent = 'Selecciona una opción';
                 stockElemento.textContent = '';
                 botonAgregar.disabled = true;

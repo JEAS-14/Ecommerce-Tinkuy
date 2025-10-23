@@ -199,7 +199,8 @@ foreach ($_SESSION['carrito'] as $id_variante => $item) {
                     <h4 class="mb-3">Dirección de Envío</h4>
                     <?php if (empty($direcciones)): ?>
                         <div class="alert alert-warning">
-                            No tienes direcciones guardadas. <a href="mi_perfil.php">Agrega una dirección</a> antes de continuar.
+                            No tienes direcciones guardadas. 
+                            <a href="mi_perfil.php?seccion=direcciones" class="alert-link">Agrega una dirección</a> antes de continuar.
                         </div>
                     <?php else: ?>
                         <div class="list-group mb-3">
@@ -278,5 +279,178 @@ foreach ($_SESSION['carrito'] as $id_variante => $item) {
 
     <?php include 'assets/component/footer.php'; // ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+  const inputNumero = document.getElementById('cc-number');
+  const inputCVV = document.getElementById('cc-cvv');
+  const inputExp = document.getElementById('cc-expiration');
+  const botonPagar = document.querySelector('button[type="submit"]');
+
+  // Crear/insertar icono y feedback si no existen
+  const labelNumero = document.querySelector('label[for="cc-number"]');
+  const icono = document.createElement('i');
+  icono.className = 'bi bi-credit-card text-secondary ms-2';
+  labelNumero.appendChild(icono);
+
+  const feedback = document.createElement('div');
+  feedback.className = 'form-text mt-1';
+  inputNumero.parentNode.appendChild(feedback);
+
+  // Formatea, detecta tipo, valida longitud y Luhn
+  inputNumero.addEventListener('input', () => {
+    let raw = inputNumero.value.replace(/\D/g, ''); // solo dígitos puros
+    // Formateo visual: espacios cada 4 (pero Amex tiene 4-6-5, manejamos solo visual 4s para simplicidad)
+    let formatted = raw.match(/.{1,4}/g);
+    inputNumero.value = formatted ? formatted.join(' ') : '';
+
+    const tipo = detectarTipoTarjeta(raw);
+    const validoLongitud = validarLongitudPorTipo(raw, tipo);
+    const pasaLuhn = raw.length >= 12 ? luhnCheck(raw) : false; // Luhn solo si hay suficientes dígitos
+    actualizarIcono(tipo);
+
+    // Mensajes de feedback
+    if (raw.length === 0) {
+      feedback.textContent = '';
+      feedback.className = 'form-text mt-1 text-muted';
+      inputNumero.classList.remove('is-invalid', 'is-valid');
+    } else if (!tipo) {
+      feedback.textContent = 'Tipo de tarjeta no reconocido todavía.';
+      feedback.className = 'form-text mt-1 text-warning';
+      inputNumero.classList.remove('is-valid');
+      inputNumero.classList.add('is-invalid');
+    } else if (!validoLongitud) {
+      const expect = longitudEsperadaTexto(tipo);
+      feedback.textContent = `Formato incorrecto para ${tipo}. ${expect}.`;
+      feedback.className = 'form-text mt-1 text-danger';
+      inputNumero.classList.remove('is-valid');
+      inputNumero.classList.add('is-invalid');
+    } else if (!pasaLuhn) {
+      feedback.textContent = `El número parece inválido (falló la comprobación Luhn). Revisa los dígitos.`;
+      feedback.className = 'form-text mt-1 text-danger';
+      inputNumero.classList.remove('is-valid');
+      inputNumero.classList.add('is-invalid');
+    } else {
+      feedback.textContent = `Tarjeta detectada: ${tipo}. Número válido.`;
+      feedback.className = 'form-text mt-1 text-success';
+      inputNumero.classList.remove('is-invalid');
+      inputNumero.classList.add('is-valid');
+    }
+  });
+
+  // Limitar y validar CVV (Amex 4, otros 3)
+  inputCVV.addEventListener('input', () => {
+    inputCVV.value = inputCVV.value.replace(/\D/g, '');
+    const raw = document.getElementById('cc-number').value.replace(/\D/g, '');
+    const tipo = detectarTipoTarjeta(raw);
+    const max = (tipo === 'Amex') ? 4 : 3;
+    inputCVV.value = inputCVV.value.slice(0, max);
+  });
+
+  // Expiración MM/YY con máscara simple
+  inputExp.addEventListener('input', () => {
+    let v = inputExp.value.replace(/\D/g, '').slice(0,4);
+    if (v.length >= 3) {
+      inputExp.value = v.slice(0,2) + '/' + v.slice(2);
+    } else {
+      inputExp.value = v;
+    }
+  });
+
+  // Evitar envío si la tarjeta no pasa las validaciones cliente-side
+  document.querySelector('form').addEventListener('submit', (e) => {
+    const raw = inputNumero.value.replace(/\D/g, '');
+    const tipo = detectarTipoTarjeta(raw);
+    const validoLongitud = validarLongitudPorTipo(raw, tipo);
+    const pasaLuhn = luhnCheck(raw);
+
+    if (!tipo || !validoLongitud || !pasaLuhn) {
+      e.preventDefault();
+      inputNumero.focus();
+      feedback.textContent = 'Revisa el número de tarjeta. No se puede procesar hasta que sea válido.';
+      feedback.className = 'form-text mt-1 text-danger';
+      return false;
+    }
+
+    // Además aquí podrías deshabilitar el botón y mostrar "procesando..."
+    botonPagar.disabled = true;
+    botonPagar.innerHTML = '<i class="bi bi-hourglass-split"></i> Procesando...';
+  });
+
+  // --- Funciones auxiliares ---
+
+  function detectarTipoTarjeta(num) {
+    if (!num) return null;
+    // MasterCard: 51-55, 2221-2720
+    const reMaster1 = /^(5[1-5][0-9]{0,})$/;
+    const reMaster2 = /^(22[2-9][0-9]{0,}|2[3-6][0-9]{0,}|27[01][0-9]{0,}|2720[0-9]{0,})$/;
+    if (/^4[0-9]{0,}$/.test(num)) return 'Visa';
+    if (reMaster1.test(num) || reMaster2.test(num)) return 'MasterCard';
+    if (/^3[47][0-9]{0,}$/.test(num)) return 'Amex';
+    if (/^6(?:011|5[0-9]{2}|4[4-9][0-9]|22[1-9])[0-9]{0,}$/.test(num)) return 'Discover';
+    return null;
+  }
+
+  function validarLongitudPorTipo(num, tipo) {
+    const len = num.length;
+    if (!tipo) return false;
+    switch(tipo) {
+      case 'Visa': return (len === 13 || len === 16 || len === 19);
+      case 'MasterCard': return (len === 16);
+      case 'Amex': return (len === 15);
+      case 'Discover': return (len === 16);
+      default: return false;
+    }
+  }
+
+  function longitudEsperadaTexto(tipo) {
+    switch(tipo) {
+      case 'Visa': return 'Visa puede tener 13, 16 o 19 dígitos.';
+      case 'MasterCard': return 'MasterCard debe tener 16 dígitos.';
+      case 'Amex': return 'American Express debe tener 15 dígitos.';
+      case 'Discover': return 'Discover debe tener 16 dígitos.';
+      default: return '';
+    }
+  }
+
+  function actualizarIcono(tipo) {
+    icono.className = 'bi ms-2';
+    switch(tipo) {
+      case 'Visa':
+        icono.classList.add('bi-credit-card-2-front-fill', 'text-primary');
+        break;
+      case 'MasterCard':
+        icono.classList.add('bi-credit-card-2-back-fill', 'text-warning');
+        break;
+      case 'Amex':
+        icono.classList.add('bi-credit-card', 'text-info');
+        break;
+      case 'Discover':
+        icono.classList.add('bi-credit-card', 'text-success');
+        break;
+      default:
+        icono.classList.add('bi-credit-card', 'text-secondary');
+    }
+  }
+
+  // Luhn algorithm (returns true if number passes check)
+  function luhnCheck(val) {
+    if (!val || val.length < 12) return false;
+    let sum = 0;
+    let shouldDouble = false;
+    for (let i = val.length - 1; i >= 0; i--) {
+      let digit = parseInt(val.charAt(i), 10);
+      if (shouldDouble) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+      shouldDouble = !shouldDouble;
+    }
+    return (sum % 10) === 0;
+  }
+});
+</script>
+
 </body>
 </html>
