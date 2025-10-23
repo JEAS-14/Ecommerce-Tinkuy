@@ -1,14 +1,10 @@
 <?php
 session_start();
+// 💡 CORRECCIÓN 1: Definir la página actual para el navbar
+$pagina_actual = 'productos'; 
 include 'assets/admin/db.php'; // Incluimos la conexión
 
-// --- ESTA ES LA PARTE CORREGIDA ---
-
-// 1. Esta consulta es más compleja.
-// Seleccionamos la información del producto (de la tabla 'productos')
-// Y usamos un Sub-SELECT (MIN(vp.precio)) para encontrar el precio
-// de la variante más barata de ESE producto.
-// También contamos cuántas variantes tiene (COUNT) y sumamos el stock total (SUM).
+// --- LÓGICA PARA OBTENER TODOS LOS PRODUCTOS ---
 
 $query = "
     SELECT 
@@ -31,7 +27,8 @@ $query = "
 
 // 2. Ejecutar la consulta
 $resultado = $conn->query($query);
-// --- FIN DE LA PARTE CORREGIDA ---
+// No se usa fetch_all aquí, sino el loop while más abajo.
+// $conn->close() se cierra correctamente al final del loop.
 ?>
 
 <!DOCTYPE html>
@@ -43,12 +40,12 @@ $resultado = $conn->query($query);
     <title>Nuestros Productos | Tinkuy</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
-    </head>
+</head>
 
-<body>
+<body class="d-flex flex-column min-vh-100"> 
     <?php include 'assets/component/navbar.php'; ?>
 
-    <div class="container my-5">
+    <div class="container my-5 flex-grow-1"> 
         <h1 class="text-center mb-4">Catálogo de Productos</h1>
 
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
@@ -95,7 +92,6 @@ $resultado = $conn->query($query);
 
         </div>
     </div>
-
     <?php include 'assets/component/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>

@@ -28,7 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } 
     
     // --- INICIO DE VALIDACIONES DE CALIDAD (NUEVO) ---
-
     // preg_match devuelve 1 si coincide, 0 si no.
     // Esta regex permite letras (incluyendo acentos y ñ) y espacios.
     elseif (!preg_match('/^[a-zA-Z\sñáéíóúÁÉÍÓÚ]+$/u', $nombres)) {
@@ -55,11 +54,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->begin_transaction();
 
         try {
+            // FIX CRÍTICO: Creamos una variable para el rol, ya que bind_param no acepta constantes (Argument #2 cannot be passed by reference)
+            $id_rol_var = ID_ROL_CLIENTE;
+
             // INSERT 1: Crear el usuario en la tabla 'usuarios'
             $stmt_usuario = $conn->prepare(
                 "INSERT INTO usuarios (id_rol, usuario, email, clave_hash) VALUES (?, ?, ?, ?)"
             );
-            $stmt_usuario->bind_param("isss", ID_ROL_CLIENTE, $usuario, $email, $clave_hash);
+            // Usamos $id_rol_var en lugar de ID_ROL_CLIENTE para resolver el Fatal Error.
+            $stmt_usuario->bind_param("isss", $id_rol_var, $usuario, $email, $clave_hash); 
             $stmt_usuario->execute();
 
             // Obtener el ID del usuario que acabamos de crear
@@ -76,7 +79,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Si todo salió bien, confirmamos la transacción
             $conn->commit();
-            $mensaje_exito = "¡Registro exitoso! Ahora puedes iniciar sesión.";
+            
+            // Usamos una sesión para mostrar el mensaje de éxito en la página de login
+            $_SESSION['mensaje_exito'] = "¡Registro exitoso! Ahora puedes iniciar sesión.";
+            header("Location: login.php");
+            exit;
 
         } catch (mysqli_sql_exception $e) {
             // Si algo falló (ej: usuario o email duplicado), deshacemos todo
@@ -85,7 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($e->getCode() == 1062) { // 1062 = Error de entrada duplicada
                 $mensaje_error = "El nombre de usuario o el email ya están registrados.";
             } else {
-                $mensaje_error = "Ocurrió un error en el registro: " . $e->getMessage();
+                // Solo para desarrollo: $mensaje_error = "Ocurrió un error en el registro: " . $e->getMessage();
+                $mensaje_error = "Ocurrió un error inesperado al registrarte. Inténtalo de nuevo.";
             }
         }
     }
@@ -132,27 +140,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="nombres" class="form-label">Nombres</label>
-                                <input type="text" class="form-control" id="nombres" name="nombres" required>
+                                <input type="text" class="form-control" id="nombres" name="nombres" value="<?= htmlspecialchars($_POST['nombres'] ?? '') ?>" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="apellidos" class="form-label">Apellidos</label>
-                                <input type="text" class="form-control" id="apellidos" name="apellidos" required>
+                                <input type="text" class="form-control" id="apellidos" name="apellidos" value="<?= htmlspecialchars($_POST['apellidos'] ?? '') ?>" required>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label for="usuario" class="form-label">Nombre de usuario</label>
-                            <input type="text" class="form-control" id="usuario" name="usuario" required>
+                            <input type="text" class="form-control" id="usuario" name="usuario" value="<?= htmlspecialchars($_POST['usuario'] ?? '') ?>" required>
                         </div>
 
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
+                            <input type="email" class="form-control" id="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
                         </div>
                         
                         <div class="mb-3">
                             <label for="telefono" class="form-label">Teléfono (Opcional)</label>
-                            <input type="tel" class="form-control" id="telefono" name="telefono">
+                            <input type="tel" class="form-control" id="telefono" name="telefono" value="<?= htmlspecialchars($_POST['telefono'] ?? '') ?>">
                         </div>
 
                         <div class="row">
