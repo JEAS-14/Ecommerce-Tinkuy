@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../admin/db.php'; // Subimos un nivel
+include 'db.php'; // Estamos en admin
 
 $mensaje_error = "";
 $mensaje_exito = "";
@@ -10,24 +10,23 @@ if (!isset($_SESSION['usuario_id'])) {
     header('Location: ../../login.php'); //
     exit;
 }
-if ($_SESSION['rol'] !== 'vendedor' && $_SESSION['rol'] !== 'admin') {
+if ($_SESSION['rol'] !== 'admin') { // SOLO admin puede editar CUALQUIER producto
+    session_destroy();
     header('Location: ../../login.php'); //
     exit;
 }
 
 // 1. Validamos el ID del producto (Seguridad)
 if (!isset($_GET['id']) || !filter_var($_GET['id'], FILTER_VALIDATE_INT)) {
-    header('Location: productos.php'); //
+    header('Location: productos_admin.php'); //
     exit;
 }
 $id_producto = (int)$_GET['id'];
-$id_vendedor = $_SESSION['usuario_id'];
+// (No necesitamos $id_vendedor porque el admin puede editar todo)
 
 // --- LÓGICA DE PROCESAMIENTO (POST) ---
-// (Esta página se envía a sí misma, por eso el POST está aquí)
+// (Idéntica a la del vendedor, pero las consultas NO filtran por id_vendedor)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    
-    // 2. Identificamos qué formulario se envió (Calidad de Usabilidad)
     try {
         // --- ACCIÓN: ACTUALIZAR PRODUCTO GENERAL ---
         if (isset($_POST['accion']) && $_POST['accion'] === 'actualizar_producto') {
@@ -38,18 +37,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if(empty($nombre) || $id_categoria === 0) {
                  throw new Exception("El nombre y la categoría son obligatorios.");
             }
-
-            // (Lógica de imagen opcional, por simplicidad la omitimos en la actualización general)
             
-            $stmt = $conn->prepare("UPDATE productos SET nombre_producto = ?, descripcion = ?, id_categoria = ? WHERE id_producto = ? AND id_vendedor = ?");
-            $stmt->bind_param("ssiii", $nombre, $descripcion, $id_categoria, $id_producto, $id_vendedor);
+            // ADMIN SÍ puede actualizar, NO necesita filtrar por vendedor
+            $stmt = $conn->prepare("UPDATE productos SET nombre_producto = ?, descripcion = ?, id_categoria = ? WHERE id_producto = ?");
+            $stmt->bind_param("ssii", $nombre, $descripcion, $id_categoria, $id_producto);
             $stmt->execute();
-            $mensaje_exito = "Producto actualizado correctamente.";
+            $mensaje_exito = "Producto actualizado correctamente por admin.";
         }
         
         // --- ACCIÓN: AGREGAR NUEVA VARIANTE ---
+        // (Esta lógica es idéntica a la del vendedor)
         elseif (isset($_POST['accion']) && $_POST['accion'] === 'agregar_variante') {
-            $talla = trim($_POST['talla']);
+             $talla = trim($_POST['talla']);
             $color = trim($_POST['color']);
             $precio = filter_var(trim($_POST['precio']), FILTER_VALIDATE_FLOAT);
             $stock = filter_var(trim($_POST['stock']), FILTER_VALIDATE_INT);
@@ -61,51 +60,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("La talla y el color son obligatorios para la nueva variante.");
             }
             
-            // Obtenemos el nombre del producto para el SKU
             $nombre_prod_temp = $conn->query("SELECT nombre_producto FROM productos WHERE id_producto = $id_producto")->fetch_assoc()['nombre_producto'];
             $sku_simulado = strtoupper(substr($nombre_prod_temp, 0, 3)) . '-' . $id_producto . '-' . $talla . '-' . $color;
 
             $stmt = $conn->prepare("INSERT INTO variantes_producto (id_producto, talla, color, sku, precio, stock) VALUES (?, ?, ?, ?, ?, ?)");
             $stmt->bind_param("isssdi", $id_producto, $talla, $color, $sku_simulado, $precio, $stock);
             $stmt->execute();
-            $mensaje_exito = "Nueva variante agregada con éxito.";
+            $mensaje_exito = "Nueva variante agregada con éxito por admin.";
         }
 
         // --- ACCIÓN: ACTUALIZAR / ELIMINAR VARIANTES EXISTENTES ---
+        // (Esta lógica es idéntica a la del vendedor)
         elseif (isset($_POST['accion']) && $_POST['accion'] === 'actualizar_variantes') {
-            
-            $conn->begin_transaction(); // Transacción (Fiabilidad ISO 25010)
-            
-            // Preparamos los 'statements' fuera del bucle (Calidad de Rendimiento)
+            $conn->begin_transaction(); 
             $stmt_update = $conn->prepare("UPDATE variantes_producto SET precio = ?, stock = ? WHERE id_variante = ? AND id_producto = ?");
             $stmt_delete = $conn->prepare("DELETE FROM variantes_producto WHERE id_variante = ? AND id_producto = ?");
 
             foreach ($_POST['variantes'] as $id_variante => $datos) {
-                $id_variante = (int)$id_variante; // Seguridad
-                
+                $id_variante = (int)$id_variante; 
                 if (isset($datos['eliminar'])) {
-                    // Si marcaron "Eliminar", la borramos
                     $stmt_delete->bind_param("ii", $id_variante, $id_producto);
                     $stmt_delete->execute();
                 } else {
-                    // Si no, la actualizamos
                     $precio = filter_var($datos['precio'], FILTER_VALIDATE_FLOAT);
                     $stock = filter_var($datos['stock'], FILTER_VALIDATE_INT);
-                    
                     if ($precio === false || $stock === false || $precio <= 0 || $stock < 0) {
-                        throw new Exception("El precio y stock de la variante ID $id_variante son inválidos.");
+                        throw new Exception("Datos inválidos para variante ID $id_variante.");
                     }
                     $stmt_update->bind_param("diii", $precio, $stock, $id_variante, $id_producto);
                     $stmt_update->execute();
                 }
             }
-            
-            $conn->commit(); // Confirmamos todos los cambios
-            $mensaje_exito = "Lista de variantes actualizada.";
+            $conn->commit(); 
+            $mensaje_exito = "Lista de variantes actualizada por admin.";
         }
         
     } catch (Exception $e) {
-        $conn->rollback(); // Deshacemos todo si algo falla
+        $conn->rollback(); 
         $mensaje_error = "Error: " . $e->getMessage();
     }
 }
@@ -115,28 +106,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // --- LÓGICA DE VISUALIZACIÓN (GET) ---
 // (Cargamos los datos frescos después del POST)
 
-// 3. Verificamos Propiedad y Obtenemos datos del Producto (Seguridad)
-$sql_producto = "SELECT p.*, c.nombre_categoria 
-                 FROM productos p JOIN categorias c ON p.id_categoria = c.id_categoria 
-                 WHERE p.id_producto = ?";
-$params_producto = [$id_producto];
-$tipos_producto = "i";
-
-if ($_SESSION['rol'] === 'vendedor') {
-    $sql_producto .= " AND p.id_vendedor = ?";
-    $params_producto[] = $id_vendedor;
-    $tipos_producto .= "i";
-}
-
-$stmt = $conn->prepare($sql_producto);
-$stmt->bind_param($tipos_producto, ...$params_producto);
+// 3. Obtenemos datos del Producto (Admin puede ver CUALQUIERA)
+$stmt = $conn->prepare("
+    SELECT p.*, c.nombre_categoria, u.usuario AS nombre_vendedor 
+    FROM productos p 
+    JOIN categorias c ON p.id_categoria = c.id_categoria 
+    JOIN usuarios u ON p.id_vendedor = u.id_usuario
+    WHERE p.id_producto = ?
+");
+$stmt->bind_param("i", $id_producto);
 $stmt->execute();
 $resultado_producto = $stmt->get_result();
 
 if ($resultado_producto->num_rows === 0) {
-    // Si no existe o no es nuestro, no podemos editarlo
-    $_SESSION['mensaje_error'] = "Producto no encontrado o no tienes permiso para editarlo.";
-    header('Location: productos.php'); //
+    $_SESSION['mensaje_error'] = "Producto no encontrado.";
+    header('Location: productos_admin.php'); //
     exit;
 }
 $producto = $resultado_producto->fetch_assoc();
@@ -160,17 +144,17 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Producto - Panel Vendedor</title>
+    <title>Editar Producto (Admin) - <?= htmlspecialchars($producto['nombre_producto']) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-danger">
         <div class="container">
-            <a class="navbar-brand" href="dashboard.php">Panel Vendedor</a> <div class="collapse navbar-collapse">
+            <a class="navbar-brand" href="dashboard.php">Panel Admin</a> <div class="collapse navbar-collapse">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link active" href="productos.php">Mis Productos</a></li> <li class="nav-item"><a class="nav-link" href="agregar_producto.php">Agregar Producto</a></li> </ul>
+                    <li class="nav-item"><a class="nav-link" href="pedidos.php">Pedidos</a></li> <li class="nav-item"><a class="nav-link active" href="productos_admin.php">Productos</a></li> <li class="nav-item"><a class="nav-link" href="usuarios.php">Usuarios</a></li> </ul>
                 <ul class="navbar-nav">
                     <li class="nav-item"><a class="nav-link" href="../../logout.php">Cerrar Sesión</a></li> </ul>
             </div>
@@ -178,8 +162,9 @@ $conn->close();
     </nav>
 
     <div class="container my-5">
-        <h2>Editando: <?= htmlspecialchars($producto['nombre_producto']) ?></h2>
-        <a href="productos.php" class="btn btn-sm btn-outline-secondary mb-3"> <i class="bi bi-arrow-left"></i> Volver a la lista
+        <h2>Editando (Admin): <?= htmlspecialchars($producto['nombre_producto']) ?></h2>
+        <p class="text-muted">Producto de: <strong><?= htmlspecialchars($producto['nombre_vendedor']) ?></strong></p>
+        <a href="productos_admin.php" class="btn btn-sm btn-outline-secondary mb-3"> <i class="bi bi-arrow-left"></i> Volver a la lista
         </a>
 
         <?php if (!empty($mensaje_error)): ?>
@@ -199,7 +184,6 @@ $conn->close();
                     <div class="card-body">
                         <form action="" method="POST">
                             <input type="hidden" name="accion" value="actualizar_producto">
-                            
                             <div class="mb-3">
                                 <label for="nombre_producto" class="form-label">Nombre del Producto</label>
                                 <input type="text" class="form-control" id="nombre_producto" name="nombre_producto" value="<?= htmlspecialchars($producto['nombre_producto']) ?>" required>
@@ -224,7 +208,7 @@ $conn->close();
                 </div>
 
                 <div class="card shadow-sm">
-                    <div class="card-header">
+                     <div class="card-header">
                         Agregar Nueva Variante
                     </div>
                     <div class="card-body">
@@ -264,7 +248,6 @@ $conn->close();
                     <div class="card-body">
                         <form action="" method="POST">
                             <input type="hidden" name="accion" value="actualizar_variantes">
-                            
                             <?php if (empty($variantes)): ?>
                                 <p class="text-muted">Este producto aún no tiene variantes.</p>
                             <?php else: ?>

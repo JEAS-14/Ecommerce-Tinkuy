@@ -1,6 +1,6 @@
 <?php
 $host = "localhost";
-$port = 3306; // Puerto por defecto de MySQL
+$port = 3307; // Puerto por defecto de MySQL
 $usuario = "root";
 $password = ""; // Tu contraseña (está bien si es vacía en XAMPP)
 $database = "tinkuy_db";
