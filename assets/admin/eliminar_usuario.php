@@ -1,21 +1,23 @@
 <?php
 session_start();
-include 'db.php'; //
+include 'db.php'; // Asegúrate que la conexión a la base de datos es correcta
+
+// === Definir roles (IDs de tu BD) ===
+define('ROL_ADMIN', 1);
+define('ROL_VENDEDOR', 2);
+define('ROL_CLIENTE', 3);
 
 // --- INICIO DE CALIDAD (SEGURIDAD ISO 25010) ---
-if (!isset($_SESSION['usuario_id'])) {
-    header('Location: ../../login.php'); //
-    exit;
-}
-if ($_SESSION['rol'] !== 'admin') {
-    header('Location: ../../login.php'); //
+if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
+    // Si no es admin o no está logueado, lo redirigimos
+    header('Location: ../../login.php');
     exit;
 }
 
 // 1. Validamos el ID
 if (!isset($_GET['id']) || !filter_var($_GET['id'], FILTER_VALIDATE_INT)) {
     $_SESSION['mensaje_error'] = "ID de usuario no válido.";
-    header('Location: usuarios.php'); //
+    header('Location: usuarios.php');
     exit;
 }
 $id_usuario_a_eliminar = (int)$_GET['id'];
@@ -23,39 +25,67 @@ $id_usuario_a_eliminar = (int)$_GET['id'];
 // 2. Seguridad Crítica: Un admin NO puede eliminarse a sí mismo.
 if ($id_usuario_a_eliminar === $_SESSION['usuario_id']) {
     $_SESSION['mensaje_error'] = "Error: No puedes eliminar tu propia cuenta de administrador.";
-    header('Location: usuarios.php'); //
+    header('Location: usuarios.php');
     exit;
 }
 // --- FIN DE CALIDAD (SEGURIDAD) ---
 
 
-// --- INICIO DE CALIDAD (FIABILIDAD ISO 25010) ---
+// ======================================================
+// 3. VALIDACIÓN CLAVE: SOLO SE PUEDE ELIMINAR CLIENTES (ROL 3)
+// ======================================================
 try {
-    // 3. Intentamos eliminar el usuario.
-    // NOTA: La BD (ON DELETE CASCADE) borrará 'perfiles' y 'direcciones'.
-    // NOTA: La BD (ON DELETE RESTRICT) fallará si el usuario tiene 'pedidos' o 'productos'.
+    $stmt_check = $conn->prepare("SELECT id_rol, nombre_rol FROM usuarios u JOIN roles r ON u.id_rol = r.id_rol WHERE u.id_usuario = ?");
+    $stmt_check->bind_param("i", $id_usuario_a_eliminar);
+    $stmt_check->execute();
+    $usuario_check = $stmt_check->get_result()->fetch_assoc();
+    $stmt_check->close();
     
+    // Si no encuentra el usuario o su rol no es CLIENTE
+    if (!$usuario_check) {
+        throw new Exception("El usuario no se encontró o ya fue eliminado.");
+    }
+
+    if ((int)$usuario_check['id_rol'] !== ROL_CLIENTE) {
+        $_SESSION['mensaje_error'] = "ERROR: Solo se puede ELIMINAR usuarios con rol 'Cliente'. Este usuario es '{$usuario_check['nombre_rol']}'.";
+        header('Location: usuarios.php');
+        exit;
+    }
+
+} catch (Exception $e) {
+    $_SESSION['mensaje_error'] = "Error de validación de rol: " . $e->getMessage();
+    header('Location: usuarios.php');
+    exit;
+}
+
+// ======================================================
+// 4. ELIMINACIÓN (SOLO SI PASÓ LA VALIDACIÓN DE ROL)
+// ======================================================
+try {
     $stmt = $conn->prepare("DELETE FROM usuarios WHERE id_usuario = ?");
     $stmt->bind_param("i", $id_usuario_a_eliminar);
     $stmt->execute();
 
     if ($stmt->affected_rows > 0) {
-        $_SESSION['mensaje_exito'] = "Usuario ID #$id_usuario_a_eliminar eliminado correctamente.";
+        $_SESSION['mensaje_exito'] = "Usuario cliente ID #$id_usuario_a_eliminar eliminado correctamente. ✅";
     } else {
+        // Esto solo ocurre si el usuario existía al inicio pero se borró entretanto
         throw new Exception("El usuario no se encontró o no se pudo eliminar.");
     }
     
+    $stmt->close();
+    
 } catch (mysqli_sql_exception $e) {
-    // 4. Manejo de Errores (Fiabilidad)
+    
     // Código 1451: Error de llave foránea (RESTRICT)
     if ($e->getCode() == 1451) {
-        $_SESSION['mensaje_error'] = "Error: No se puede eliminar el usuario ID #$id_usuario_a_eliminar porque tiene pedidos o productos asociados. Primero debe reasignarlos o eliminarlos.";
+        $_SESSION['mensaje_error'] = "ERROR: No se puede eliminar el cliente ID #$id_usuario_a_eliminar porque tiene registros asociados (ej. pedidos, calificaciones, etc.). ❌";
     } else {
         $_SESSION['mensaje_error'] = "Error de base de datos: " . $e->getMessage();
     }
+} finally {
+    // 5. Redirigimos de vuelta a la lista
+    header('Location: usuarios.php');
+    exit;
 }
-
-// 5. Redirigimos de vuelta a la lista
-header('Location: usuarios.php'); //
-exit;
 ?>

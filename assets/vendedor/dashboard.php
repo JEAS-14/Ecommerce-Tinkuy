@@ -203,7 +203,7 @@ $conn->close(); // Cerramos la conexión al final
                              <i class="bi bi-person-circle me-1"></i><?= htmlspecialchars($nombre_vendedor) ?>
                          </a>
                          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                             <li><a class="dropdown-item" href="../../mi_perfil.php"> <i class="bi bi-gear me-2"></i>Mi Perfil</a></li>
+                             <li><a class="dropdown-item" href="mi_perfil_vendedor.php"> <i class="bi bi-gear me-2"></i>Mi Perfil</a></li>
                              <li><hr class="dropdown-divider"></li>
                              <li><a class="dropdown-item text-danger" href="../../logout.php"> <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
                          </ul>
