@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Enlace de recuperación
             $reset_link = BASE_URL . "/reset_password.php?token=" . $token;
-            $asunto = "🔐 Restablece tu contraseña | Tinkuy";
+            $asunto = " Restablece tu contraseña | Tinkuy";
 
             $body_html = '
 <!doctype html>
