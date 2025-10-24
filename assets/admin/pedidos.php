@@ -1,123 +1,46 @@
 <?php
 session_start();
-include 'db.php'; // Estamos en la carpeta 'admin', db.php está aquí
+include 'db.php'; 
 
 // --- INICIO DE CALIDAD (SEGURIDAD ISO 25010) ---
-if (!isset($_SESSION['usuario_id'])) {
-    header('Location: ../../login.php'); // Redirigimos al login
-    exit;
-}
-if ($_SESSION['rol'] !== 'admin') {
-    session_destroy();
-    header('Location: ../../login.php'); //
+if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
+    header('Location: ../../login.php');
     exit;
 }
 // --- FIN DE CALIDAD (SEGURIDAD) ---
 
-$mensaje_error = "";
-$mensaje_exito = "";
+$nombre_admin = $_SESSION['usuario'];
 
-// --- LÓGICA POST (Calidad de Funcionalidad) ---
+// --- LÓGICA DE CALIDAD (FUNCIONALIDAD) ---
 
-// ACCIÓN 1: Cambiar estado manualmente (como antes)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'cambiar_estado') {
-    try {
-        $id_pedido = (int)$_POST['id_pedido'];
-        $id_nuevo_estado = (int)$_POST['id_estado_pedido'];
-        
-        if ($id_pedido === 0 || $id_nuevo_estado === 0) {
-            throw new Exception("Datos inválidos.");
-        }
-        
-        $stmt_update = $conn->prepare("UPDATE pedidos SET id_estado_pedido = ? WHERE id_pedido = ?");
-        $stmt_update->bind_param("ii", $id_nuevo_estado, $id_pedido);
-        $stmt_update->execute();
-        
-        if ($stmt_update->affected_rows > 0) {
-            $mensaje_exito = "Estado del pedido #$id_pedido actualizado correctamente.";
-        } else {
-            throw new Exception("No se pudo actualizar el estado o ya estaba en ese estado.");
-        }
-    } catch (Exception $e) {
-        $mensaje_error = "Error: " . $e->getMessage();
-    }
+// Filtros (funcionalidad futura, pero los preparamos)
+$filtro_estado = $_GET['estado'] ?? ''; // ej: ?estado=2
+
+$sql = "SELECT 
+            p.id_pedido,
+            p.fecha_pedido,
+            p.total_pedido,
+            e.nombre_estado,
+            e.id_estado,
+            CONCAT(pr.nombres, ' ', pr.apellidos) AS nombre_cliente
+        FROM 
+            pedidos AS p
+        JOIN 
+            estados_pedido AS e ON p.id_estado_pedido = e.id_estado
+        JOIN 
+            usuarios AS u ON p.id_usuario = u.id_usuario
+        JOIN 
+            perfiles AS pr ON u.id_usuario = pr.id_usuario
+        ";
+
+// Aplicar filtro si existe
+if (!empty($filtro_estado) && is_numeric($filtro_estado)) {
+    $sql .= " WHERE p.id_estado_pedido = " . intval($filtro_estado);
 }
 
-// NUEVO - ACCIÓN 2: Registrar envío (ISO 25010 - Adecuación Funcional)
-elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'registrar_envio') {
-    try {
-        $id_pedido_envio = (int)$_POST['id_pedido_envio'];
-        $proveedor_envio = trim($_POST['proveedor_envio']);
-        $numero_seguimiento = trim($_POST['numero_seguimiento']);
-        
-        // El estado '3' es 'Enviado' según tu BBDD
-        $id_estado_enviado = 3; 
+$sql .= " ORDER BY p.fecha_pedido DESC";
 
-        if ($id_pedido_envio === 0 || empty($proveedor_envio) || empty($numero_seguimiento)) {
-            throw new Exception("Debe completar todos los campos del envío.");
-        }
-        
-        // Actualizamos el pedido con la info de envío y cambiamos su estado a 'Enviado'
-        $stmt_envio = $conn->prepare("UPDATE pedidos SET proveedor_envio = ?, numero_seguimiento = ?, id_estado_pedido = ? WHERE id_pedido = ?");
-        $stmt_envio->bind_param("ssii", $proveedor_envio, $numero_seguimiento, $id_estado_enviado, $id_pedido_envio);
-        $stmt_envio->execute();
-        
-        if ($stmt_envio->affected_rows > 0) {
-            $mensaje_exito = "Envío del pedido #$id_pedido_envio registrado. Estado actualizado a 'Enviado'.";
-            
-            // --- IMPLEMENTACIÓN FUTURA ---
-            // AQUÍ: Implementar la lógica de envío de correo al cliente
-            // (Usando la configuración de PHPMailer que tienes)
-            // 
-            // 1. Obtener el email del cliente (requiere un JOIN extra o una consulta nueva)
-            // 2. Enviar correo: "Tu pedido #$id_pedido_envio ha sido enviado vía $proveedor_envio con el Nro. $numero_seguimiento."
-            // --- FIN IMPLEMENTACIÓN FUTURA ---
-
-        } else {
-            throw new Exception("No se pudo actualizar la información de envío.");
-        }
-    } catch (Exception $e) {
-        $mensaje_error = "Error al registrar envío: " . $e->getMessage();
-    }
-}
-
-
-// --- LÓGICA GET (Calidad de Rendimiento) ---
-
-// 1. Obtenemos la lista de TODOS los estados (para el <select>)
-$resultado_estados = $conn->query("SELECT * FROM estados_pedido");
-$estados_posibles = $resultado_estados->fetch_all(MYSQLI_ASSOC);
-
-// 2. Obtenemos TODOS los pedidos (Consulta MODIFICADA para incluir info de envío)
-$query_pedidos = "
-    SELECT 
-        p.id_pedido,
-        p.fecha_pedido,
-        p.total_pedido,
-        p.proveedor_envio,       -- NUEVO
-        p.numero_seguimiento,    -- NUEVO
-        e.nombre_estado,
-        e.id_estado,
-        pr.nombres AS cliente_nombres,
-        pr.apellidos AS cliente_apellidos,
-        d.direccion,
-        d.ciudad
-    FROM 
-        pedidos AS p
-    JOIN 
-        estados_pedido AS e ON p.id_estado_pedido = e.id_estado
-    JOIN 
-        usuarios AS u ON p.id_usuario = u.id_usuario
-    JOIN 
-        perfiles AS pr ON u.id_usuario = pr.id_usuario
-    JOIN 
-        direcciones AS d ON p.id_direccion_envio = d.id_direccion
-    ORDER BY
-        p.fecha_pedido DESC
-";
-$resultado_pedidos = $conn->query($query_pedidos);
-$pedidos = $resultado_pedidos->fetch_all(MYSQLI_ASSOC);
-
+$result_pedidos = $conn->query($sql);
 $conn->close();
 ?>
 
@@ -126,181 +49,136 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestionar Pedidos - Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+    <title>Gestión de Pedidos - Admin Tinkuy</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar {
+            width: 260px; height: 100vh; position: fixed; top: 0; left: 0;
+            background-color: #212529; padding-top: 1rem;
+        }
+        .sidebar .nav-link { color: #adb5bd; font-size: 1rem; margin-bottom: 0.5rem; }
+        .sidebar .nav-link i { margin-right: 0.8rem; }
+        .sidebar .nav-link.active { background-color: #dc3545; color: #fff; }
+        .sidebar .nav-link:hover { background-color: #343a40; color: #fff; }
+        .main-content { margin-left: 260px; padding: 2.5rem; width: calc(100% - 260px); }
+        .user-dropdown .dropdown-toggle { color: #fff; }
+        .user-dropdown .dropdown-menu { border-radius: 0.5rem; }
+        
+        /* Estilos para badges de estado (Usabilidad) */
+        .badge-estado { font-size: 0.9em; padding: 0.5em 0.75em; }
+    </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-danger">
-        <div class="container">
-            <a class="navbar-brand" href="dashboard.php">Panel Admin</a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link active" href="pedidos.php">Pedidos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="productos_admin.php">Productos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="usuarios.php">Usuarios</a></li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item"><a class="nav-link" href="../../logout.php">Cerrar Sesión</a></li>
-                </ul>
+    <div class="sidebar d-flex flex-column p-3 text-white">
+        <a href="dashboard.php" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+            <i class="bi bi-shop-window fs-4 me-2"></i>
+            <span class="fs-4">Admin Tinkuy</span>
+        </a>
+        <hr>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item">
+                <a href="dashboard.php" class="nav-link">
+                    <i class="bi bi-grid-fill"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="pedidos.php" class="nav-link active" aria-current="page">
+                    <i class="bi bi-list-check"></i> Pedidos
+                </a>
+            </li>
+            <li>
+                <a href="productos_admin.php" class="nav-link">
+                    <i class="bi bi-box-seam-fill"></i> Productos
+                </a>
+            </li>
+            <li>
+                <a href="usuarios.php" class="nav-link">
+                    <i class="bi bi-people-fill"></i> Usuarios
+                </a>
+            </li>
+        </ul>
+        <hr>
+        <div class="dropdown user-dropdown">
+            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle fs-4 me-2"></i>
+                <strong><?= htmlspecialchars($nombre_admin) ?></strong>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                <li><a class="dropdown-item" href="../../logout.php">Cerrar Sesión</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Gestión de Pedidos</h1>
+            <div class="btn-group">
+                <a href="pedidos.php" class="btn btn-outline-secondary <?php echo empty($filtro_estado) ? 'active' : ''; ?>">Todos</a>
+                <a href="pedidos.php?estado=2" class="btn btn-outline-primary <?php echo $filtro_estado == '2' ? 'active' : ''; ?>">Pagados</a>
+                <a href="pedidos.php?estado=3" class="btn btn-outline-info <?php echo $filtro_estado == '3' ? 'active' : ''; ?>">Enviados</a>
+                <a href="pedidos.php?estado=5" class="btn btn-outline-danger <?php echo $filtro_estado == '5' ? 'active' : ''; ?>">Cancelados</a>
             </div>
         </div>
-    </nav>
-
-    <div class="container my-5">
-        <h2 class="mb-4">Gestión de Pedidos</h2>
-
-        <?php if (!empty($mensaje_error)): ?>
-            <div class="alert alert-danger"><?= htmlspecialchars($mensaje_error) ?></div>
-        <?php endif; ?>
-        <?php if (!empty($mensaje_exito)): ?>
-            <div class="alert alert-success"><?= htmlspecialchars($mensaje_exito) ?></div>
-        <?php endif; ?>
 
         <div class="card shadow-sm">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table align-middle table-hover">
+                    <table class="table table-hover align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th scope="col">Pedido #</th>
-                                <th scope="col">Fecha</th>
-                                <th scope="col">Cliente</th>
-                                <th scope="col">Total</th>
-                                <th scope="col">Seguimiento</th> <th scope="col">Estado</th>
-                                <th scope="col">Acciones</th>
+                                <th>N° Pedido</th>
+                                <th>Cliente</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th>Total</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if (empty($pedidos)): ?>
-                                <tr>
-                                    <td colspan="7" class="text-center text-muted">No se han encontrado pedidos.</td>
-                                </tr>
-                            <?php else: ?>
-                                <?php foreach ($pedidos as $pedido): ?>
+                            <?php if ($result_pedidos->num_rows > 0) : ?>
+                                <?php while ($pedido = $result_pedidos->fetch_assoc()) : ?>
                                     <tr>
-                                        <td><strong>#<?= $pedido['id_pedido'] ?></strong></td>
-                                        <td><?= date('d/m/Y H:i', strtotime($pedido['fecha_pedido'])) ?></td>
+                                        <td class_alias="font-monospace">#<?= $pedido['id_pedido'] ?></td>
+                                        <td><?= htmlspecialchars($pedido['nombre_cliente']) ?></td>
+                                        <td><?= date("d/m/Y H:i", strtotime($pedido['fecha_pedido'])) ?></td>
                                         <td>
-                                            <?= htmlspecialchars($pedido['cliente_nombres'] . ' ' . $pedido['cliente_apellidos']) ?>
-                                            <br>
-                                            <small class="text-muted"><?= htmlspecialchars($pedido['direccion'] . ', ' . $pedido['ciudad']) ?></small>
+                                            <?php
+                                            // Asignamos colores según el estado (Mejora la Usabilidad)
+                                            $badge_color = 'secondary'; // Default
+                                            if ($pedido['id_estado'] == 1) $badge_color = 'warning text-dark'; // Pendiente
+                                            if ($pedido['id_estado'] == 2) $badge_color = 'primary'; // Pagado
+                                            if ($pedido['id_estado'] == 3) $badge_color = 'info text-dark'; // Enviado
+                                            if ($pedido['id_estado'] == 4) $badge_color = 'success'; // Entregado
+                                            if ($pedido['id_estado'] == 5) $badge_color = 'danger'; // Cancelado
+                                            ?>
+                                            <span class="badge rounded-pill bg-<?= $badge_color ?> badge-estado">
+                                                <?= htmlspecialchars($pedido['nombre_estado']) ?>
+                                            </span>
                                         </td>
-                                        <td><strong>S/ <?= number_format($pedido['total_pedido'], 2) ?></strong></td>
-                                        
+                                        <td>S/ <?= number_format($pedido['total_pedido'], 2) ?></td>
                                         <td>
-                                            <?php if (!empty($pedido['numero_seguimiento'])): ?>
-                                                <small>
-                                                    <strong><?= htmlspecialchars($pedido['proveedor_envio']) ?>:</strong>
-                                                    <br>
-                                                    <?= htmlspecialchars($pedido['numero_seguimiento']) ?>
-                                                </small>
-                                            <?php else: ?>
-                                                <small class="text-muted">Sin enviar</small>
-                                            <?php endif; ?>
-                                        </td>
-                                        
-                                        <td>
-                                            <form action="pedidos.php" method="POST" class="d-flex">
-                                                <input type="hidden" name="accion" value="cambiar_estado">
-                                                <input type="hidden" name="id_pedido" value="<?= $pedido['id_pedido'] ?>">
-                                                <select name="id_estado_pedido" class="form-select form-select-sm" style="min-width: 140px;">
-                                                    <?php foreach ($estados_posibles as $estado): ?>
-                                                        <option value="<?= $estado['id_estado'] ?>" <?= ($estado['id_estado'] == $pedido['id_estado']) ? 'selected' : '' ?>>
-                                                            <?= htmlspecialchars($estado['nombre_estado']) ?>
-                                                        </option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                                <button type="submit" class="btn btn-sm btn-outline-primary ms-2" title="Guardar Cambio">
-                                                    <i class="bi bi-save"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-
-                                        <td>
-                                            <?php if ($pedido['id_estado'] == 2): ?>
-                                                <button 
-                                                    type="button" 
-                                                    class="btn btn-sm btn-success btn-registrar-envio" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#modalEnvio" 
-                                                    data-id="<?= $pedido['id_pedido'] ?>"
-                                                    title="Registrar Envío">
-                                                    <i class="bi bi-truck"></i> Gestionar
-                                                </button>
-                                            <?php endif; ?>
-
-                                            <a href="detalle_pedido.php?id=<?= $pedido['id_pedido'] ?>" class="btn btn-sm btn-info" title="Ver Detalle">
-                                                <i class="bi bi-eye"></i>
+                                            <a href="ver_pedido.php?id=<?= $pedido['id_pedido'] ?>" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye-fill me-1"></i> Ver Detalles
                                             </a>
                                         </td>
                                     </tr>
-                                <?php endforeach; ?>
+                                <?php endwhile; ?>
+                            <?php else : ?>
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">No se encontraron pedidos.</td>
+                                </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
-
-    <div class="modal fade" id="modalEnvio" tabindex="-1" aria-labelledby="modalEnvioLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalEnvioLabel">Registrar Información de Envío</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form action="pedidos.php" method="POST">
-                    <div class="modal-body">
-                        <p>Se marcará el pedido como <strong>'Enviado'</strong> y se guardará la información de seguimiento.</p>
-                        
-                        <input type="hidden" name="accion" value="registrar_envio">
-                        <input type="hidden" name="id_pedido_envio" id="id_pedido_envio" value="">
-
-                        <div class="mb-3">
-                            <label for="proveedor_envio" class="form-label">Empresa de Envío (Ej: Olva, DHL, Urbano)</label>
-                            <input type="text" class="form-control" id="proveedor_envio" name="proveedor_envio" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="numero_seguimiento" class="form-label">Número de Seguimiento (Tracking)</label>
-                            <input type="text" class="form-control" id="numero_seguimiento" name="numero_seguimiento" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar y Marcar como Enviado</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var modalEnvio = document.getElementById('modalEnvio');
-            
-            modalEnvio.addEventListener('show.bs.modal', function (event) {
-                // Botón que activó el modal
-                var button = event.relatedTarget;
-                
-                // Extraer el ID del pedido del atributo data-id
-                var idPedido = button.getAttribute('data-id');
-                
-                // Actualizar el input oculto en el formulario del modal
-                var inputIdPedido = modalEnvio.querySelector('#id_pedido_envio');
-                inputIdPedido.value = idPedido;
-
-                // Opcional: Actualizar el título del modal
-                var modalTitle = modalEnvio.querySelector('.modal-title');
-                modalTitle.textContent = 'Registrar Envío para Pedido #' + idPedido;
-            });
-        });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
