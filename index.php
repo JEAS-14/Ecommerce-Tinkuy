@@ -96,41 +96,42 @@ $conn->close();
         </section>
 
         <section class="container my-5">
-            <h2 class="text-center mb-4">Más Vendidos</h2>
-            <div class="row">
+    <h2 class="text-center mb-4">Más Vendidos</h2>
+    <div class="row">
 
-                <?php if (empty($productos_destacados)): ?>
-                    <div class="col-12">
-                        <p class="text-center text-muted">No hay productos destacados en este momento.</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($productos_destacados as $producto): ?>
-                        <div class="col-md-4 mb-4">
-                            <div class="card h-100 shadow-sm">
-                                <img src="assets/img/productos/<?= htmlspecialchars($producto['imagen_principal']) ?>"
-                                    class="card-img-top producto-img"
-                                    alt="<?= htmlspecialchars($producto['nombre_producto']) ?>">
-
-                                <div class="card-body text-center">
-                                    <h5 class="card-title"><?= htmlspecialchars($producto['nombre_producto']) ?></h5>
-                                    <p class="card-text"><?= htmlspecialchars(substr($producto['descripcion'], 0, 100)) ?>...
-                                    </p>
-
-                                    <p class="card-text fw-bold">
-                                        Desde S/ <?= number_format($producto['precio_minimo'], 2) ?>
-                                    </p>
-
-                                    <a href="producto.php?id=<?= $producto['id_producto'] ?>" class="btn btn-dark w-100"> <i
-                                            class="bi bi-box-arrow-in-right"></i> Ver más
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-
+        <?php if (empty($productos_destacados)): ?>
+            <div class="col-12">
+                <p class="text-center text-muted">No hay productos destacados en este momento.</p>
             </div>
-        </section>
+        <?php else: ?>
+            <?php foreach ($productos_destacados as $producto): ?>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <img src="assets/img/productos/<?= htmlspecialchars($producto['imagen_principal']) ?>"
+                             class="card-img-top img-fluid" 
+                             alt="<?= htmlspecialchars($producto['nombre_producto']) ?>"
+                             style="height: 250px; object-fit: cover;">
+
+                        <div class="card-body text-center">
+                            <h5 class="card-title"><?= htmlspecialchars($producto['nombre_producto']) ?></h5>
+                            <p class="card-text"><?= htmlspecialchars(substr($producto['descripcion'], 0, 100)) ?>...</p>
+
+                            <p class="card-text fw-bold">
+                                Desde S/ <?= number_format($producto['precio_minimo'], 2) ?>
+                            </p>
+
+                            <a href="producto.php?id=<?= $producto['id_producto'] ?>" class="btn btn-dark w-100"> 
+                                <i class="bi bi-box-arrow-in-right"></i> Ver más
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+
+    </div>
+</section>
+
     </div>
 
     <?php include 'assets/component/footer.php'; // Este se queda al final del div flex-grow-1 y antes de cerrar el body ?>

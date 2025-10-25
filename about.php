@@ -27,7 +27,7 @@
             </p>
             <div class="row">
                 <div class="col-md-6">
-                    <img src="assets/img/tela.jpeg" alt="Artesanas trabajando" class="img-fluid rounded">
+                    <img src="assets/img/trabajadores.jpeg" alt="Artesanas trabajando" class="img-fluid rounded">
                 </div>
                 <div class="col-md-6">
                     <h3 class="text-uppercase">Nuestra Historia</h3>
@@ -88,7 +88,7 @@
         <h3 class="text-center mb-4">¿Cómo Trabajamos?</h3>
         <div class="row">
             <div class="col-md-6">
-                <img src="assets/img/trabajadores.jpeg" alt="Proceso de trabajo artesanal" class="img-fluid rounded">
+                <img src="assets/img/empresa.jpeg" alt="Proceso de trabajo artesanal" class="img-fluid rounded">
             </div>
             <div class="col-md-6">
                 <p>
