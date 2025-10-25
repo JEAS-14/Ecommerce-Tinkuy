@@ -24,14 +24,7 @@
         </div>
     </div>
 </footer>
-<script>
-(function(d){
-  var s = d.createElement("script");
-  s.setAttribute("data-account", "OnvWxZDKAe");
-  s.setAttribute("src", "https://cdn.userway.org/widget.js");
-  (d.body || d.head).appendChild(s);
-})(document);
-</script>
+
 <style>
 /* Mantiene el footer al fondo */
 html, body {
