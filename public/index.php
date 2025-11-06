@@ -410,6 +410,11 @@ switch ($page) {
      * 🛡 ADMIN - rutas MVC (placeholders para vistas en src/Views/admin)
      * ======================= */
     case 'admin_dashboard':
+        require_once BASE_PATH . '/src/Controllers/AdminController.php';
+        $adminController = new AdminController();
+        // Llamamos al método que prepara los datos y los extraemos como variables
+        $datos = $adminController->dashboard();
+        extract($datos);
         require BASE_PATH . '/src/Views/admin/dashboard.php';
         break;
     case 'admin_productos':
