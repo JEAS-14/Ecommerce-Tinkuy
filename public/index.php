@@ -409,29 +409,95 @@ switch ($page) {
     /* =======================
      * 🛡 ADMIN - rutas MVC (placeholders para vistas en src/Views/admin)
      * ======================= */
-    case 'admin_dashboard':
+    case 'admin_login': // <-- RUTA NUEVA
         require_once BASE_PATH . '/src/Controllers/AdminController.php';
-        $adminController = new AdminController();
-        // Llamamos al método que prepara los datos y los extraemos como variables
+        $adminController = new AdminController($conn);
+        $adminController->login(); // Llama al método 'login'
+        break;
+        
+    case 'admin_procesar_login': // <-- RUTA NUEVA
+        require_once BASE_PATH . '/src/Controllers/AdminController.php';
+        $adminController = new AdminController($conn);
+         $adminController->procesarLogin(); // Llama al método 'procesarLogin'
+         //  break;
+    case 'admin_dashboard': 
+        require_once BASE_PATH . '/src/Controllers/AdminController.php';
+        $adminController = new AdminController($conn);
         $datos = $adminController->dashboard();
         extract($datos);
         require BASE_PATH . '/src/Views/admin/dashboard.php';
         break;
+     case 'admin_pedidos':
+        require_once BASE_PATH . '/src/Controllers/AdminController.php'; // 1. Carga el controlador
+        $adminController = new AdminController($conn);                   // 2. Pasa la BBDD
+        $datos = $adminController->pedidos();                        // 3. Obtiene los datos
+        extract($datos);
+        require BASE_PATH . '/src/Views/admin/pedidos/pedidos.php';
+        break;
+        case 'admin_ver_pedido':
+        // --- INICIO DE CALIDAD (SEGURIDAD) ---
+        // 1. Validamos el ID del pedido aquí, antes de llamar al controlador
+        if (!isset($_GET['id']) || !filter_var($_GET['id'], FILTER_VALIDATE_INT)) {
+            $_SESSION['mensaje_error'] = "ID de pedido no válido.";
+            header('Location: ?page=admin_pedidos'); // Redirigimos a la lista
+            exit;
+        }
+        $id_pedido_actual = (int)$_GET['id'];
+        // --- FIN DE CALIDAD (SEGURIDAD) ---
+
+        require_once BASE_PATH . '/src/Controllers/AdminController.php'; // 1. Carga el controlador
+        $adminController = new AdminController($conn);                   // 2. Pasa la BBDD
+        $datos = $adminController->verPedido($id_pedido_actual);       // 3. Obtiene los datos (pasando el ID)
+        extract($datos);                                               // 4. Prepara las variables
+        require BASE_PATH . '/src/Views/admin/pedidos/ver_pedido.php';   // 5. Carga la vista LIMPIA
+        break;
+
     case 'admin_productos':
-        require BASE_PATH . '/src/Views/admin/productos.php';
+        require_once BASE_PATH . '/src/Controllers/AdminProductosController.php'; // 1. Carga el NUEVO controlador
+        $controller = new AdminProductosController($conn);                     // 2. Pasa la BBDD
+        $datos = $controller->listarProductos();                           // 3. Obtiene los datos (maneja POST y GET)
+        extract($datos);                                                     // 4. Prepara las variables
+        require BASE_PATH . '/src/Views/admin/productos/productos_admin.php';  // 5. Carga la vista LIMPIA
         break;
     case 'admin_agregar_producto':
-        require BASE_PATH . '/src/Views/admin/agregar_producto.php';
+        require BASE_PATH . '/src/Views/admin/productos/agregar_producto.php';
         break;
+
     case 'admin_editar_producto':
-        require BASE_PATH . '/src/Views/admin/editar_producto.php';
+        // 1. Validamos el ID del producto
+        if (!isset($_GET['id']) || !filter_var($_GET['id'], FILTER_VALIDATE_INT)) {
+            $_SESSION['mensaje_error'] = "ID de producto no válido.";
+            header('Location: ?page=admin_productos');
+            exit;
+        }
+        $id_producto_actual = (int)$_GET['id'];
+        
+        // 2. Cargamos el controlador
+        require_once BASE_PATH . '/src/Controllers/AdminProductosController.php';
+        $controller = new AdminProductosController($conn);
+        
+        // 3. Llamamos al método (maneja GET, POST y acciones GET como 'reactivar')
+        $datos = $controller->editarProducto($id_producto_actual); 
+        
+        // 4. Preparamos datos y mostramos la vista
+        extract($datos);
+        require BASE_PATH . '/src/Views/admin/productos/editar_producto_admin.php';
         break;
-    case 'admin_usuarios':
-        require BASE_PATH . '/src/Views/admin/usuarios.php';
+
+        case 'admin_usuarios';
+            require_once BASE_PATH . '/src/Controllers/AdminUsuariosController.php'; // 1. Carga el NUEVO controlado
+             $controller = new AdminUsuariosController($conn);                     // 2. Pasa la BBDD
+             $datos = $controller->listarUsuarios();                            // 3. Obtiene los datos (maneja GET y acciones)
+             extract($datos);                                                     // 4. Prepara las variables
+             require BASE_PATH . '/src/Views/admin/usuarios/usuarios.php';          // 5. Carga la vista LIMPIA
         break;
-    case 'admin_pedidos':
-        require BASE_PATH . '/src/Views/admin/pedidos.php';
-        break;
+        case 'admin_crear_usuario':
+            require_once BASE_PATH . '/src/Controllers/AdminUsuariosController.php'; // 1. Carga el NUEVO controlador
+            $controller = new AdminUsuariosController($conn);                     // 2. Pasa la BBDD
+            $datos = $controller->crearUsuario();                              // 3. Obtiene los datos (maneja POST y GET)e
+            extract($datos);                                                     // 4. Prepara las variables
+            require BASE_PATH . '/src/Views/admin/usuarios/crear_usuario.php';   // 5. Carga la vista LIMPIA
+            break;
 
     /* =======================
      * 🧩 MISCELÁNEO

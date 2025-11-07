@@ -1,151 +1,55 @@
-<?php
-session_start();
-include 'db.php'; // Estamos en la carpeta 'admin', db.php está aquí
-
-// --- INICIO DE CALIDAD (SEGURIDAD ISO 25010) ---
-// (Tu código de seguridad está perfecto)
-if (!isset($_SESSION['usuario_id'])) {
-    header('Location: ../../login.php');
-    exit;
-}
-if ($_SESSION['rol'] !== 'admin') {
-    session_destroy();
-    header('Location: ../../login.php');
-    exit;
-}
-// --- FIN DE CALIDAD (SEGURIDAD) ---
-
-$nombre_admin = $_SESSION['usuario'];
-
-// --- LÓGICA DE CALIDAD (FUNCIONALIDAD) ---
-// (Tus consultas están perfectas)
-$stmt_pendientes = $conn->query("SELECT COUNT(*) AS total FROM pedidos WHERE id_estado_pedido = 1");
-$pedidos_pendientes = $stmt_pendientes->fetch_assoc()['total'];
-
-$stmt_usuarios = $conn->query("SELECT COUNT(*) AS total FROM usuarios");
-$total_usuarios = $stmt_usuarios->fetch_assoc()['total'];
-
-$stmt_productos = $conn->query("SELECT COUNT(*) AS total FROM productos");
-$total_productos = $stmt_productos->fetch_assoc()['total'];
-
-$stmt_ingresos = $conn->query("SELECT SUM(total_pedido) AS total FROM pedidos WHERE id_estado_pedido IN (2, 3, 4)");
-$ingresos_totales = $stmt_ingresos->fetch_assoc()['total'] ?? 0;
-
-$conn->close();
-?>
-
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Admin Tinkuy</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
     <style>
-        body {
-            background-color: #f8f9fa;
-            /* Un gris muy claro */
-        }
-
-        .sidebar {
-            width: 260px;
-            /* Ancho fijo para el sidebar */
-            height: 100vh;
-            /* Ocupa toda la altura */
-            position: fixed;
-            /* Fijo en la pantalla */
-            top: 0;
-            left: 0;
-            background-color: #212529;
-            /* Un fondo oscuro estándar */
-            padding-top: 1rem;
-        }
-
-        /* Estilos para los links de navegación */
-        .sidebar .nav-link {
-            color: #adb5bd;
-            /* Color de texto grisáceo */
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .sidebar .nav-link i {
-            margin-right: 0.8rem;
-            /* Espacio entre icono y texto */
-        }
-
-        /* Estilo para el link activo */
-        .sidebar .nav-link.active {
-            background-color: #dc3545;
-            /* Tu color rojo de marca */
-            color: #fff;
-        }
-
-        .sidebar .nav-link:hover {
-            background-color: #343a40;
-            /* Un hover sutil */
-            color: #fff;
-        }
-
-        /* Contenido principal */
-        .main-content {
-            margin-left: 260px;
-            /* Mismo ancho que el sidebar */
-            padding: 2.5rem;
-            width: calc(100% - 260px);
-            /* Ocupa el resto del ancho */
-        }
-
-        /* Dropdown de usuario en el sidebar */
-        .user-dropdown .dropdown-toggle {
-            color: #fff;
-        }
-
-        .user-dropdown .dropdown-menu {
-            border-radius: 0.5rem;
-        }
-
-        /* Estilos para los iconos de las tarjetas */
-        .stat-card-icon {
-            font-size: 3rem;
-            /* Tamaño de 3rem que tenías */
-        }
+        /* (Tu CSS está perfecto, lo dejo igual) */
+        body { background-color: #f8f9fa; }
+        .sidebar { width: 260px; height: 100vh; position: fixed; top: 0; left: 0; background-color: #212529; padding-top: 1rem; }
+        .sidebar .nav-link { color: #adb5bd; font-size: 1rem; margin-bottom: 0.5rem; }
+        .sidebar .nav-link i { margin-right: 0.8rem; }
+        .sidebar .nav-link.active { background-color: #dc3545; color: #fff; }
+        .sidebar .nav-link:hover { background-color: #343a40; color: #fff; }
+        .main-content { margin-left: 260px; padding: 2.5rem; width: calc(100% - 260px); }
+        .user-dropdown .dropdown-toggle { color: #fff; }
+        .user-dropdown .dropdown-menu { border-radius: 0.5rem; }
+        .stat-card-icon { font-size: 3rem; }
     </style>
 </head>
-
 <body>
 
     <div class="sidebar d-flex flex-column p-3 text-white">
-        <a href="dashboard.php"
-            class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+        
+        <a href="?page=admin_dashboard" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
             <i class="bi bi-shop-window fs-4 me-2"></i>
             <span class="fs-4">Admin Tinkuy</span>
         </a>
         <hr>
         <ul class="nav nav-pills flex-column mb-auto">
             <li class="nav-item">
-                <a href="dashboard.php" class="nav-link active" aria-current="page">
+                <a href="?page=admin_dashboard" class="nav-link active" aria-current="page">
                     <i class="bi bi-grid-fill"></i>
                     Dashboard
                 </a>
             </li>
             <li>
-                <a href="pedidos.php" class="nav-link">
+                <a href="?page=admin_pedidos" class="nav-link">
                     <i class="bi bi-list-check"></i>
                     Pedidos
                 </a>
             </li>
             <li>
-                <a href="productos_admin.php" class="nav-link">
+                <a href="?page=admin_productos" class="nav-link">
                     <i class="bi bi-box-seam-fill"></i>
                     Productos
                 </a>
             </li>
             <li>
-                <a href="usuarios.php" class="nav-link">
+                <a href="?page=admin_usuarios" class="nav-link">
                     <i class="bi bi-people-fill"></i>
                     Usuarios
                 </a>
@@ -159,7 +63,7 @@ $conn->close();
                 <strong><?= htmlspecialchars($nombre_admin) ?></strong>
             </a>
             <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
-                <li><a class="dropdown-item" href="../../logout.php">Cerrar Sesión</a></li>
+                <li><a class="dropdown-item" href="?page=logout">Cerrar Sesión</a></li>
             </ul>
         </div>
     </div>
@@ -177,7 +81,7 @@ $conn->close();
                         <p class="card-text text-muted">Pedidos Pendientes</p>
                     </div>
                     <div class="card-footer bg-transparent border-0 pb-3">
-                        <a href="pedidos.php" class="btn btn-sm btn-outline-warning">Gestionar</a>
+                        <a href="?page=admin_pedidos" class="btn btn-sm btn-outline-warning">Gestionar</a>
                     </div>
                 </div>
             </div>
@@ -189,7 +93,7 @@ $conn->close();
                         <p class="card-text text-muted">Usuarios Registrados</p>
                     </div>
                     <div class="card-footer bg-transparent border-0 pb-3">
-                        <a href="usuarios.php" class="btn btn-sm btn-outline-primary">Gestionar</a>
+                        <a href="?page=admin_usuarios" class="btn btn-sm btn-outline-primary">Gestionar</a>
                     </div>
                 </div>
             </div>
@@ -201,7 +105,7 @@ $conn->close();
                         <p class="card-text text-muted">Productos Totales</p>
                     </div>
                     <div class="card-footer bg-transparent border-0 pb-3">
-                        <a href="productos_admin.php" class="btn btn-sm btn-outline-info">Gestionar</a>
+                        <a href="?page=admin_productos" class="btn btn-sm btn-outline-info">Gestionar</a>
                     </div>
                 </div>
             </div>
@@ -213,7 +117,7 @@ $conn->close();
                         <p class="card-text text-muted">Ingresos Totales</p>
                     </div>
                     <div class="card-footer bg-transparent border-0 pb-3">
-                        <a href="pedidos.php" class="btn btn-sm btn-outline-success">Ver Pedidos</a>
+                        <a href="?page=admin_pedidos" class="btn btn-sm btn-outline-success">Ver Pedidos</a>
                     </div>
                 </div>
             </div>
@@ -222,14 +126,14 @@ $conn->close();
         <div class="card p-4 mt-5 shadow-sm">
             <h4>Acciones Rápidas:</h4>
             <div class="list-group list-group-flush mt-2">
-                <a href="pedidos.php" class="list-group-item list-group-item-action"><i
+                <a href="?page=admin_pedidos" class="list-group-item list-group-item-action"><i
                         class="bi bi-list-check me-2"></i>Ver y gestionar pedidos de clientes</a>
-                <a href="productos_admin.php" class="list-group-item list-group-item-action"><i
+                <a href="?page=admin_productos" class="list-group-item list-group-item-action"><i
                         class="bi bi-box-seam me-2"></i>Administrar todos los productos de la tienda</a>
-                <a href="usuarios.php" class="list-group-item list-group-item-action"><i
+                <a href="?page=admin_usuarios" class="list-group-item list-group-item-action"><i
                         class="bi bi-people-fill me-2"></i>Gestionar cuentas de usuario (clientes, vendedores,
                     admins)</a>
-                <a href="crear_usuario.php" class="list-group-item list-group-item-action"><i
+                <a href="?page=admin_crear_usuario" class="list-group-item list-group-item-action"><i
                         class="bi bi-person-plus-fill me-2"></i>Crear una nueva cuenta de usuario (vendedor o admin)</a>
             </div>
         </div>
@@ -238,5 +142,4 @@ $conn->close();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>
