@@ -1,36 +1,3 @@
-<?php
-session_start();
-include 'db.php';
-
-// Si el formulario fue enviado
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $usuario = $_POST['usuario'];
-    $clave = $_POST['clave'];
-
-    // Consulta preparada para evitar SQL Injection
-    $stmt = $conn->prepare("SELECT * FROM usuarios WHERE usuario = ?");
-    $stmt->bind_param("s", $usuario);
-    $stmt->execute();
-    $resultado = $stmt->get_result();
-
-    if ($resultado->num_rows === 1) {
-        $usuario_db = $resultado->fetch_assoc();
-        if (password_verify($clave, $usuario_db['clave'])) {
-            // Inicio de sesión exitoso
-            $_SESSION['admin'] = $usuario_db['usuario'];
-            header("Location: dashboard.php");
-            exit();
-        } else {
-            $error = "Contraseña incorrecta.";
-        }
-    } else {
-        $error = "Usuario no encontrado.";
-    }
-
-    $stmt->close();
-}
-?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -46,11 +13,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <div class="card-body">
                         <h3 class="card-title text-center mb-4">Panel de Administración</h3>
 
-                        <?php if (isset($error)): ?>
-                            <div class="alert alert-danger"><?= $error ?></div>
+                        <?php 
+                        // El error ahora se lee desde la URL (lo envía el controlador)
+                        if (isset($_GET['error'])): 
+                            $error_msg = ($_GET['error'] == 'pass') ? "Contraseña incorrecta." : "Usuario no encontrado.";
+                        ?>
+                            <div class="alert alert-danger"><?= $error_msg ?></div>
                         <?php endif; ?>
 
-                        <form method="POST">
+                        <form method="POST" action="?page=admin_procesar_login">
                             <div class="mb-3">
                                 <label for="usuario" class="form-label">Usuario</label>
                                 <input type="text" name="usuario" id="usuario" class="form-control" required>
@@ -65,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </form>
                     </div>
                 </div>
-                <p class="text-center mt-3"><a href="../../index.php">← Volver a la tienda</a></p>
+                <p class="text-center mt-3"><a href="?page=index">← Volver a la tienda</a></p>
             </div>
         </div>
     </div>
