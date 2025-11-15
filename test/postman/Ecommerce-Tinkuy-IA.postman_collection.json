@@ -1,0 +1,123 @@
+{
+  "info": {
+    "name": "Ecommerce-Tinkuy IA",
+    "_postman_id": "e5b8a8c8-0c6a-4a2e-9d77-9d8e7d1b1a11",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "IA - POST válido (200)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/deepseek_search.php",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"chompa de alpaca\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('Tiene texto', function () { pm.expect(json.texto).to.be.a('string').and.not.empty; });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "IA - POST query vacío (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/deepseek_search.php",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Mensaje de validación', function () { pm.expect(json.error).to.include('Query vacío'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "IA - GET no permitido (405)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/deepseek_search.php"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 405', function () { pm.response.to.have.status(405); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "IA - Modo demo (200)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/deepseek_search.php?demo=1",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"Quiero un regalo para mi mamá\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('Demo tiene texto', function () { pm.expect(json.texto).to.be.a('string').and.not.empty; });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "IA - Debug (?debug=1)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/deepseek_search.php?debug=1"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('Tiene claves de diagnostico', function () { pm.expect(json).to.have.keys(['root','env_local_path','env_path','env_local_readable','env_readable','has_env_var','env_local_has_key','env_has_key','demo_env_set','note']); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
