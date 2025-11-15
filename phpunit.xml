@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         bootstrap="test/bootstrap.php"
+         colors="true"
+         stopOnFailure="false"
+         failOnWarning="false"
+         failOnRisky="false">
+    
+    <!-- Configuración de las suites de prueba -->
+    <testsuites>
+        <testsuite name="Validaciones">
+            <file>test/ValidacionLoginTest.php</file>
+            <file>test/ValidacionesTest.php</file>
+        </testsuite>
+        
+        <testsuite name="Modelos">
+            <file>test/ProductoTest.php</file>
+            <file>test/CategoriaTest.php</file>
+        </testsuite>
+        
+        <testsuite name="Controladores">
+            <file>test/AuthControllerTest.php</file>
+            <file>test/PaymentControllerTest.php</file>
+            <file>test/PaymentControllerTestExtended.php</file>
+        </testsuite>
+    </testsuites>
+
+    <!-- Configuración de cobertura de código -->
+    <source>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+        <exclude>
+            <directory>src/Views</directory>
+            <directory>vendor</directory>
+        </exclude>
+    </source>
+
+    <!-- Configuración de logging -->
+    <logging>
+        <testdoxHtml outputFile="test-reports/testdox.html"/>
+        <junit outputFile="test-reports/junit.xml"/>
+    </logging>
+
+    <!-- Variables de entorno para tests -->
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="DB_HOST" value="localhost"/>
+        <env name="DB_NAME" value="tinkuy_db_test"/>
+    </php>
+</phpunit>

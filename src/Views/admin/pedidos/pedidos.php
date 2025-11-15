@@ -49,6 +49,12 @@
                     <i class="bi bi-people-fill"></i> Usuarios
                 </a>
             </li>
+            
+            <li class="nav-item mt-3 pt-3 border-top">
+                <a href="?page=index" class="nav-link">
+                    <i class="bi bi-globe"></i> Ver Tienda
+                </a>
+            </li>
         </ul>
         <hr>
         <div class="dropdown user-dropdown">

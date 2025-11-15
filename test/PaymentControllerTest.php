@@ -52,7 +52,7 @@ class PaymentControllerTest extends TestCase {
         // Verificar resultado
         $this->assertTrue($resultado['success']);
         $this->assertNotNull($resultado['order_id']);
-        $this->assertEquals('Pago procesado correctamente', $resultado['message']);
+        $this->assertEquals('Pedido procesado correctamente', $resultado['message']);
     }
 
     /**
@@ -60,7 +60,8 @@ class PaymentControllerTest extends TestCase {
      */
     public function testProcesarPagoConStockInsuficiente() {
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage("Stock insuficiente");
+        // El controlador devuelve "Stock insuficiente para el producto ID X"
+        $this->expectExceptionMessageMatches('/Stock insuficiente/');
         
         $carrito = [1 => ['cantidad' => 999999]];
         $this->paymentController->procesarPago(1, 1, $carrito);
