@@ -80,7 +80,7 @@ require_once __DIR__ . '/../../Controllers/AuthController.php';
                         </div>
 
                         <div class="text-center mt-3">
-                            <a href="forgot_password.php" class="text-decoration-none">
+                            <a href="<?= $base_url ?>?page=forgot_password" class="text-decoration-none">
                                 ¿Olvidaste tu contraseña?
                             </a>
                         </div>
@@ -88,7 +88,7 @@ require_once __DIR__ . '/../../Controllers/AuthController.php';
 
                     <hr class="my-4">
                     <p class="text-center mb-0">
-                        ¿No tienes cuenta? <a href="register.php">Regístrate aquí</a>
+                        ¿No tienes cuenta? <a href="<?= $base_url ?>?page=register">Regístrate aquí</a>
                     </p>
                 </div>
             </div>

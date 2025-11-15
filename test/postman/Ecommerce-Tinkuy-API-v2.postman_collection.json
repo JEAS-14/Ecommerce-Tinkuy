@@ -14,7 +14,7 @@
           "request": {
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": "{{baseUrl}}/deepseek_search.php",
+            "url": "{{basePublic}}/deepseek_search.php",
             "body": { "mode": "raw", "raw": "{\n  \"query\": \"chompa de alpaca\"\n}" }
           },
           "event": [ { "listen": "test", "script": { "exec": [
@@ -28,7 +28,7 @@
           "request": {
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": "{{baseUrl}}/deepseek_search.php",
+            "url": "{{basePublic}}/deepseek_search.php",
             "body": { "mode": "raw", "raw": "{\n  \"query\": \"\"\n}" }
           },
           "event": [ { "listen": "test", "script": { "exec": [
@@ -39,7 +39,7 @@
         },
         {
           "name": "GET no permitido (405)",
-          "request": { "method": "GET", "url": "{{baseUrl}}/deepseek_search.php" },
+          "request": { "method": "GET", "url": "{{basePublic}}/deepseek_search.php" },
           "event": [ { "listen": "test", "script": { "exec": [
             "pm.test('Status 405',()=>pm.response.to.have.status(405));"
           ] } } ]
@@ -49,7 +49,7 @@
           "request": {
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": "{{baseUrl}}/deepseek_search.php?demo=1",
+            "url": "{{basePublic}}/deepseek_search.php?demo=1",
             "body": { "mode": "raw", "raw": "{\n  \"query\": \"Quiero un regalo para mi mamá\"\n}" }
           },
           "event": [ { "listen": "test", "script": { "exec": [
@@ -65,7 +65,7 @@
       "item": [
         {
           "name": "IA Debug (?debug=1)",
-          "request": { "method": "GET", "url": "{{baseUrl}}/deepseek_search.php?debug=1" },
+          "request": { "method": "GET", "url": "{{basePublic}}/deepseek_search.php?debug=1" },
           "event": [ { "listen": "test", "script": { "exec": [
             "pm.test('Status 200',()=>pm.response.to.have.status(200));",
             "const json=pm.response.json();",

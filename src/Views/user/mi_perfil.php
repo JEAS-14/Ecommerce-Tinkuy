@@ -58,7 +58,7 @@ require_once __DIR__ . '/../../Controllers/UserController.php';
                                 <div class="card-body">
                                     <h5 class="card-title"><i class="bi bi-geo-alt-fill"></i> Direcciones</h5>
                                     <p class="card-text">Tienes <strong><?= count($direcciones) ?></strong> direcciones guardadas.</p>
-                                    <a href="mi_perfil.php?seccion=direcciones" class="btn btn-sm btn-outline-primary">Gestionar Direcciones</a>
+                                    <a href="<?= $base_url ?>?page=mi_perfil&seccion=direcciones" class="btn btn-sm btn-outline-primary">Gestionar Direcciones</a>
                                 </div>
                             </div>
                         </div>
@@ -67,7 +67,7 @@ require_once __DIR__ . '/../../Controllers/UserController.php';
                                 <div class="card-body">
                                     <h5 class="card-title"><i class="bi bi-credit-card-fill"></i> Pagos</h5>
                                     <p class="card-text">Tienes <strong><?= count($tarjetas) ?></strong> métodos de pago guardados.</p>
-                                    <a href="mi_perfil.php?seccion=pagos" class="btn btn-sm btn-outline-primary">Gestionar Pagos</a>
+                                    <a href="<?= $base_url ?>?page=mi_perfil&seccion=pagos" class="btn btn-sm btn-outline-primary">Gestionar Pagos</a>
                                 </div>
                             </div>
                         </div>

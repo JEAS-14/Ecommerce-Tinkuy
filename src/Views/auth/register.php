@@ -121,7 +121,7 @@ require_once __DIR__ . '/../../Controllers/RegisterController.php';
 
                     <hr class="my-4">
                     <p class="text-center mb-0">
-                        ¿Ya tienes cuenta? <a href="login.php">Inicia sesión</a>
+                        ¿Ya tienes cuenta? <a href="<?= $base_url ?>?page=login">Inicia sesión</a>
                     </p>
                 </div>
             </div>
