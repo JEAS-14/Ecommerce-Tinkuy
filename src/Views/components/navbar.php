@@ -28,35 +28,33 @@ $display_name = htmlspecialchars($_SESSION['usuario'] ?? 'Mi Cuenta');
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
 
-                <?php if (!$is_logged_in || $user_role === 'cliente'): ?>
-                    
-                    <li class="nav-item">
-                        <a class="nav-link <?= ($pagina_actual == 'index' ? 'active fw-bold' : ''); ?>" href="<?= $base_url ?>?page=index">
-                            <i class="bi bi-house-door me-1"></i> Inicio
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link <?= ($pagina_actual == 'nosotros' ? 'active fw-bold' : ''); ?>" href="<?= $base_url ?>?page=about">
-                            <i class="bi bi-info-circle me-1"></i> Nosotros
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link <?= ($pagina_actual == 'productos' ? 'active fw-bold' : ''); ?>" href="<?= $base_url ?>?page=products">
-                            <i class="bi bi-shop me-1"></i> Productos
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link <?= ($pagina_actual == 'contacto' ? 'active fw-bold' : ''); ?>" href="<?= $base_url ?>?page=contact">
-                            <i class="bi bi-envelope me-1"></i> Contacto
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link position-relative <?= ($pagina_actual == 'carrito' ? 'active fw-bold' : ''); ?>" href="<?= $base_url ?>?page=cart">
-                            <i class="bi bi-cart me-1"></i> Carrito
-                            </a>
-                    </li>
+                <!-- Mostrar navegación de tienda para todos los usuarios logueados -->
+                <li class="nav-item">
+                    <a class="nav-link <?= ($pagina_actual == 'index' ? 'active fw-bold' : ''); ?>" href="<?= $base_url ?>?page=index">
+                        <i class="bi bi-house-door me-1"></i> Inicio
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($pagina_actual == 'nosotros' ? 'active fw-bold' : ''); ?>" href="<?= $base_url ?>?page=about">
+                        <i class="bi bi-info-circle me-1"></i> Nosotros
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($pagina_actual == 'productos' ? 'active fw-bold' : ''); ?>" href="<?= $base_url ?>?page=products">
+                        <i class="bi bi-shop me-1"></i> Productos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($pagina_actual == 'contacto' ? 'active fw-bold' : ''); ?>" href="<?= $base_url ?>?page=contact">
+                        <i class="bi bi-envelope me-1"></i> Contacto
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link position-relative <?= ($pagina_actual == 'carrito' ? 'active fw-bold' : ''); ?>" href="<?= $base_url ?>?page=cart">
+                        <i class="bi bi-cart me-1"></i> Carrito
+                    </a>
+                </li>
 
-                <?php endif; ?>
                 <?php if ($is_logged_in): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle text-warning" href="#" id="navbarUserDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -64,18 +62,18 @@ $display_name = htmlspecialchars($_SESSION['usuario'] ?? 'Mi Cuenta');
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUserDropdown">
                             
-                            <?php if ($user_role === 'cliente'): ?>
-                                <li><a class="dropdown-item" href="<?= $base_url ?>?page=mi_perfil"><i class="bi bi-person-lines-fill me-2"></i>Mi Perfil</a></li>
-                                <li><a class="dropdown-item" href="<?= $base_url ?>?page=pedidos"><i class="bi bi-box-seam me-2"></i>Mis Pedidos</a></li>
-
-                            <?php elseif ($user_role === 'vendedor'): ?>
+                            <!-- Opciones comunes para todos los usuarios logueados -->
+                            <li><a class="dropdown-item" href="<?= $base_url ?>?page=mi_perfil"><i class="bi bi-person-lines-fill me-2"></i>Mi Perfil</a></li>
+                            <li><a class="dropdown-item" href="<?= $base_url ?>?page=pedidos"><i class="bi bi-box-seam me-2"></i>Mis Pedidos</a></li>
+                            
+                            <?php if ($user_role === 'vendedor'): ?>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="<?= $base_url ?>?page=vendedor_dashboard"><i class="bi bi-speedometer2 me-2"></i>Panel Vendedor</a></li>
-                                <li><a class="dropdown-item" href="<?= $base_url ?>?page=index" target="_blank"><i class="bi bi-globe me-2"></i>Ver tienda</a></li>
-
+                            
                             <?php elseif ($user_role === 'admin'): ?>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="<?= $base_url ?>?page=admin_dashboard"><i class="bi bi-shield-lock-fill me-2"></i>Panel Admin</a></li>
-                                <li><a class="dropdown-item" href="<?= $base_url ?>?page=index" target="_blank"><i class="bi bi-globe me-2"></i>Ver tienda</a></li>
-
+                            
                             <?php endif; ?>
                             
                             <li><hr class="dropdown-divider"></li>

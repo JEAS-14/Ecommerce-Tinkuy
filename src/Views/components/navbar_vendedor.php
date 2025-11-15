@@ -35,6 +35,11 @@ if (!isset($envios_pendientes)) {
         <div class="collapse navbar-collapse" id="vendedorNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
+                    <a class="nav-link" href="<?= $base_url ?>?page=index">
+                        <i class="bi bi-globe me-1"></i>Ver Tienda
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?= $pagina_actual === 'productos' ? 'active' : '' ?>" 
                        href="<?= $base_url ?>?page=vendedor_productos">
                         <i class="bi bi-box-seam-fill me-1"></i>Mis Productos

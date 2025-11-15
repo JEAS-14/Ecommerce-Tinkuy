@@ -5,7 +5,7 @@ use PHPUnit\Framework\TestCase;
 
 // Importamos la función que queremos probar
 // __DIR__ se asegura de encontrar el archivo desde la ubicación actual
-require_once __DIR__ . '/../assets/admin/validaciones.php';
+require_once __DIR__ . '/../src/Core/validaciones.php';
 
 class ValidacionLoginTest extends TestCase
 {
