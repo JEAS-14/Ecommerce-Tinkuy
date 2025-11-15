@@ -45,7 +45,38 @@ $pagina_actual = 'index'; // Para el navbar
                     <img src="<?= $project_root ?>/public/img/banner3.png"  class="d-block w-100" alt="Banner 3" loading="lazy"> 
                 </div>
             </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#mainCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Anterior</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#mainCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Siguiente</span>
+            </button>
+        </div>
+
+        <!-- Sección de Búsqueda Inteligente con IA -->
+        <section class="container my-5">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h4 class="mb-3">¿Buscas algo en especial?</h4>
+                    <p>Escribe lo que quieras encontrar y nuestro <strong>Asistente Inteligente (IA)</strong> te
+                        recomendará productos.</p>
+                </div>
+                <div class="col-md-6">
+                    <form id="iaSearchForm">
+                        <div class="input-group">
+                            <input type="text" id="iaSearchInput" class="form-control" placeholder="Buscar productos..."
+                                aria-label="Buscar productos">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="bi bi-search"></i> Buscar
+                            </button>
+                        </div>
+                    </form>
+                    <div id="iaSuggestion" class="mt-3 text-muted"></div>
+                </div>
             </div>
+        </section>
 
         <section class="container my-5">
             </section>
@@ -95,36 +126,54 @@ $pagina_actual = 'index'; // Para el navbar
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" defer></script>
 
-<script>
-        document.getElementById("iaSearchForm").addEventListener("submit", async function (e) {
-            e.preventDefault();
-            const query = document.getElementById("iaSearchInput").value.trim();
-            const suggestionDiv = document.getElementById("iaSuggestion");
-            // ... (indicador de carga) ...
+    <!-- Script del Asistente Inteligente IA -->
+    <script>
+    document.getElementById("iaSearchForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-            try {
-                // === RUTA FETCH CORREGIDA ===
-                const res = await fetch("<?= $controller_url ?>?page=deepseek_search", { 
+      const query = document.getElementById("iaSearchInput").value.trim();
+      const suggestionDiv = document.getElementById("iaSuggestion");
+
+      if (!query) {
+        suggestionDiv.innerHTML = "Por favor, escribe algo para buscar.";
+        return;
+      }
+
+      // Mensaje inicial
+      suggestionDiv.innerHTML = "🤖 Pensando en la mejor recomendación...";
+
+      try {
+                const res = await fetch("<?= $base_url ?>/deepseek_search.php", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ query })
                 });
 
-                // ... (el resto de tu lógica de fetch) ...
-                
-                // === RUTA ENLACE CORREGIDA ===
-                if (!data.url_redirect && data.accion === 'ver_catalogo') {
-                   outputHtml += ` <a href="<?= $controller_url ?>?page=products" class="link-secondary small">Explorar catálogo <i class="bi bi-arrow-right-short"></i></a>`;
+                if (!res.ok) {
+                    const text = await res.text();
+                    console.error("❌ Error HTTP al llamar al asistente:", res.status, text);
+                    throw new Error('Error HTTP ' + res.status);
                 }
 
-                // ... (el resto de tu lógica de fetch) ...
-            } catch (err) {
-                console.error("❌ Error con el asistente:", err);
-                // === RUTA ENLACE CORREGIDA ===
-                suggestionDiv.innerHTML = "<small class='text-danger'>❌ Hubo un problema al contactar con el asistente. Intenta buscar directamente en el <a href='<?= $controller_url ?>?page=products' class='link-danger'>catálogo</a>.</small>";
-            }
-        });
-    </script>
+                const data = await res.json();
+                console.log("✅ Respuesta IA:", data);
+
+        // Mostrar recomendación
+        suggestionDiv.innerHTML = "<b>Recomendación IA:</b> " + (data.texto || "No se recibió explicación.");
+
+                // Redirigir después de 10s si hay keyword (usar el controlador central)
+                if (data.keyword) {
+                    setTimeout(() => {
+                        window.location.href = "<?= $controller_url ?>?page=products&buscar=" + encodeURIComponent(data.keyword);
+                    }, 10000);
+                }
+
+      } catch (err) {
+        console.error("❌ Error con el asistente:", err);
+        suggestionDiv.innerHTML = "❌ Error con el asistente. Revisa la consola.";
+      }
+    });
+  </script>
 
 </body>
 </html>

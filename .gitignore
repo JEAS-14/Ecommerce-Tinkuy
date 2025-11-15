@@ -9,3 +9,5 @@ test-reports/
 .DS_Store
 node_modules/
 *.cache
+.env
+.env.local
