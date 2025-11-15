@@ -1,8 +1,6 @@
 <?php
-session_start();
-include 'assets/admin/db.php';
-// Asegúrate que BASE_URL está definida, por ejemplo: define('BASE_URL', 'http://tu-sitio.com');
-include 'assets/admin/mailer_config.php'; 
+require_once BASE_PATH . '/src/Core/db.php';
+require_once BASE_PATH . '/src/Views/admin/mailer_config.php'; 
 
 $mensaje = '';
 $tipo_mensaje = 'info'; // Para cambiar el color del alert
@@ -48,15 +46,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $conn->commit(); // Confirmar transacción solo si todo va bien
 
-                // Enlace de recuperación (Usa el token original, no el hash)
-                // Asegúrate que BASE_URL está definida correctamente en algún config
-                if (!defined('BASE_URL')) define('BASE_URL', 'http://localhost/tu_proyecto'); // Ejemplo, ajusta esto
-                
-                $reset_link = BASE_URL . "/reset_password.php?token=" . $token;
+                // Enlace de recuperación (token original, no hash)
+                $base_url_site = BASE_URL; // definido en mailer_config.php
+                $reset_link = $base_url_site . "/public/index.php?page=reset_password&token=" . urlencode($token);
                 $asunto = "Restablece tu contraseña | Tinkuy";
                 
-                // (Tu código HTML del correo es muy bueno)
-                $body_html = '... (tu HTML del correo aquí) ...'; // Lo omito por brevedad
+                $body_html = '
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Restablecer Contraseña</title></head>
+<body style="font-family:Arial,sans-serif; background-color:#f4f4f4; padding:20px;">
+<div style="max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+<h2 style="color:#0d6efd; text-align:center;">🔐 Restablecer Contraseña</h2>
+<p>Hola,</p>
+<p>Hemos recibido una solicitud para restablecer tu contraseña en <strong>Tinkuy</strong>.</p>
+<p>Haz clic en el botón de abajo para continuar:</p>
+<div style="text-align:center; margin:30px 0;">
+<a href="' . htmlspecialchars($reset_link) . '" style="display:inline-block; padding:12px 30px; background:#0d6efd; color:#fff; text-decoration:none; border-radius:5px; font-weight:bold;">Restablecer mi contraseña</a>
+</div>
+<p><small><strong>Nota:</strong> Este enlace expirará en <strong>1 hora</strong>.</small></p>
+<p>Si no solicitaste este cambio, ignora este correo.</p>
+<hr style="border:none; border-top:1px solid #ddd; margin:20px 0;">
+<p style="text-align:center; color:#888; font-size:12px;">© 2025 Tinkuy | Artesanías Peruanas</p>
+</div>
+</body>
+</html>';
 
                 // Intentar enviar el correo
                 if (send_mail($email, $asunto, $body_html)) {
@@ -121,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
         <hr>
         <div class="text-center">
-             <a href="login.php" class="text-decoration-none"><i class="bi bi-arrow-left"></i> Volver al inicio de sesión</a>
+             <a href="<?= $base_url ?>?page=login" class="text-decoration-none"><i class="bi bi-arrow-left"></i> Volver al inicio de sesión</a>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>

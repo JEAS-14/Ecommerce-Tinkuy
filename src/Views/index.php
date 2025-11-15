@@ -143,7 +143,8 @@ $pagina_actual = 'index'; // Para el navbar
       suggestionDiv.innerHTML = "🤖 Pensando en la mejor recomendación...";
 
       try {
-                const res = await fetch("<?= $base_url ?>/deepseek_search.php", {
+                // Usar ruta relativa desde public/index.php hacia deepseek_search.php (mismo directorio)
+                const res = await fetch("deepseek_search.php", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ query })

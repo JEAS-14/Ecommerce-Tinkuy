@@ -29,6 +29,8 @@ try {
     $resultado_carrito = $paymentController->getDetallesCarrito($_SESSION['carrito']);
     $carrito_items = $resultado_carrito['items'];
     $total_general = $resultado_carrito['total'];
+    // Tarjetas guardadas del usuario (simuladas)
+    $tarjetas_guardadas = $paymentController->getTarjetasUsuario($id_usuario);
 } catch (Exception $e) {
     $mensaje_error = "Error al cargar los datos: " . $e->getMessage();
 }
@@ -191,6 +193,7 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
         <form method="POST" id="checkoutForm">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+            <input type="hidden" name="secure_token" id="secure_token" value="">
             
             <div class="row g-5">
                 <div class="col-lg-7">
@@ -219,12 +222,26 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     <hr class="my-4">
 
                     <h4 class="mb-3">Método de Pago</h4>
+                    <?php if (!empty($tarjetas_guardadas)): ?>
+                        <div class="mb-2"><small class="text-muted">Usar tarjeta guardada</small></div>
+                        <div class="list-group mb-3">
+                            <?php foreach ($tarjetas_guardadas as $t): ?>
+                                <?php $value = 'tarjeta_guardada_' . (int)$t['id_tarjeta']; ?>
+                                <label class="list-group-item d-flex align-items-center">
+                                    <input class="form-check-input me-2" type="radio" name="metodo_pago" value="<?= htmlspecialchars($value) ?>">
+                                    <span><i class="bi bi-credit-card-fill"></i> <?= htmlspecialchars($t['tipo']) ?> terminada en ****<?= htmlspecialchars($t['ultimos_4_digitos']) ?> (exp. <?= htmlspecialchars($t['expiracion']) ?>)</span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="text-center text-muted my-2">— o —</div>
+                    <?php endif; ?>
+
                     <div class="my-3">
                         <div class="form-check">
                             <input id="tarjeta" name="metodo_pago" type="radio" 
-                                   class="form-check-input" value="tarjeta" checked required>
+                                   class="form-check-input" value="tarjeta" <?= empty($tarjetas_guardadas) ? 'checked' : '' ?> required>
                             <label class="form-check-label" for="tarjeta">
-                                Tarjeta de Crédito/Débito (Simulado)
+                                Pagar con nueva tarjeta (Simulado)
                             </label>
                         </div>
                     </div>
@@ -299,10 +316,12 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const inputNombre = document.getElementById('cc-name');
             const inputNumero = document.getElementById('cc-number');
             const inputCVV = document.getElementById('cc-cvv');
             const inputExp = document.getElementById('cc-expiration');
             const botonPagar = document.querySelector('button[type="submit"]');
+            const radiosMetodo = document.querySelectorAll('input[name="metodo_pago"]');
 
             // Crear/insertar icono y feedback
             const labelNumero = document.querySelector('label[for="cc-number"]');
@@ -313,6 +332,22 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             const feedback = document.createElement('div');
             feedback.className = 'form-text mt-1';
             inputNumero.parentNode.appendChild(feedback);
+
+            function updatePaymentMethodState() {
+                const sel = document.querySelector('input[name="metodo_pago"]:checked');
+                const usarNueva = !!sel && sel.value === 'tarjeta';
+                [inputNombre, inputNumero, inputExp, inputCVV].forEach(el => {
+                    if (!el) return;
+                    el.disabled = !usarNueva;
+                    el.required = usarNueva;
+                    if (!usarNueva) {
+                        el.classList.remove('is-invalid', 'is-valid');
+                    }
+                });
+            }
+
+            radiosMetodo.forEach(r => r.addEventListener('change', updatePaymentMethodState));
+            updatePaymentMethodState();
 
             // Validación de número de tarjeta
             inputNumero.addEventListener('input', () => {
@@ -374,17 +409,22 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
             // Validación del formulario
             document.getElementById('checkoutForm').addEventListener('submit', (e) => {
-                const raw = inputNumero.value.replace(/\D/g, '');
-                const tipo = detectarTipoTarjeta(raw);
-                const validoLongitud = validarLongitudPorTipo(raw, tipo);
-                const pasaLuhn = luhnCheck(raw);
+                const sel = document.querySelector('input[name="metodo_pago"]:checked');
+                const usarNueva = !!sel && sel.value === 'tarjeta';
 
-                if (!tipo || !validoLongitud || !pasaLuhn) {
-                    e.preventDefault();
-                    inputNumero.focus();
-                    feedback.textContent = 'Revisa el número de tarjeta. No se puede procesar hasta que sea válido.';
-                    feedback.className = 'form-text mt-1 text-danger';
-                    return false;
+                if (usarNueva) {
+                    const raw = inputNumero.value.replace(/\D/g, '');
+                    const tipo = detectarTipoTarjeta(raw);
+                    const validoLongitud = validarLongitudPorTipo(raw, tipo);
+                    const pasaLuhn = luhnCheck(raw);
+
+                    if (!tipo || !validoLongitud || !pasaLuhn) {
+                        e.preventDefault();
+                        inputNumero.focus();
+                        feedback.textContent = 'Revisa el número de tarjeta. No se puede procesar hasta que sea válido.';
+                        feedback.className = 'form-text mt-1 text-danger';
+                        return false;
+                    }
                 }
 
                 botonPagar.disabled = true;

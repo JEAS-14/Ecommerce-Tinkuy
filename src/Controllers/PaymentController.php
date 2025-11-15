@@ -79,6 +79,21 @@ class PaymentController {
     }
 
     /**
+     * Obtiene tarjetas guardadas (simuladas) del usuario
+     */
+    public function getTarjetasUsuario($id_usuario) {
+        $stmt = $this->conn->prepare("
+            SELECT id_tarjeta, nombre_tarjeta, ultimos_4_digitos, expiracion, tipo
+            FROM tarjetas_usuario
+            WHERE id_usuario = ?
+            ORDER BY id_tarjeta DESC
+        ");
+        $stmt->bind_param("i", $id_usuario);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
      * Procesa el pago de un pedido (ISO 25010)
      */
     public function procesarPago($id_usuario, $id_direccion, $carrito) {

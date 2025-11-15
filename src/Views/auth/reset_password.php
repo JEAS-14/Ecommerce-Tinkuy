@@ -1,7 +1,7 @@
 <?php
-session_start();
-include 'assets/admin/db.php';
-// No necesitas mailer_config aquí, solo en forgot_password.php
+// reset_password.php - Restablecer contraseña usando token del email
+// Este archivo debe ser cargado vía router: ?page=reset_password&token=...
+// Variables disponibles: $conn (db.php), $base_url (index.php)
 
 $mensaje = '';
 $tipo_mensaje = 'info'; // Para el color del alert
@@ -196,17 +196,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($token_raw)) {
         </form>
     <?php elseif ($tipo_mensaje === 'success'): ?>
         <div class="text-center mt-3">
-            <a href="login.php" class="btn btn-success w-100"><i class="bi bi-box-arrow-in-right"></i> Ir a Iniciar Sesión</a>
+            <a href="<?= $base_url ?>?page=login" class="btn btn-success w-100"><i class="bi bi-box-arrow-in-right"></i> Ir a Iniciar Sesión</a>
         </div>
     <?php else: ?>
          <div class="text-center mt-3">
-            <a href="forgot_password.php" class="btn btn-warning w-100"><i class="bi bi-arrow-clockwise"></i> Solicitar un nuevo enlace</a>
+            <a href="<?= $base_url ?>?page=forgot_password" class="btn btn-warning w-100"><i class="bi bi-arrow-clockwise"></i> Solicitar un nuevo enlace</a>
         </div>
     <?php endif; ?>
     
     <hr>
     <div class="text-center">
-         <a href="login.php" class="text-decoration-none"><i class="bi bi-arrow-left"></i> Volver al inicio de sesión</a>
+         <a href="<?= $base_url ?>?page=login" class="text-decoration-none"><i class="bi bi-arrow-left"></i> Volver al inicio de sesión</a>
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
