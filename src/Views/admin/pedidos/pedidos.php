@@ -47,6 +47,16 @@
             <li>
                 <a href="?page=admin_usuarios" class="nav-link">
                     <i class="bi bi-people-fill"></i> Usuarios
+                                <a href="?page=admin_mensajes" class="nav-link">
+                                    <i class="bi bi-envelope-fill"></i> Mensajes
+                                </a>
+                            </li>
+                            <li>
+                </a>
+            </li>
+            <li>
+                <a href="?page=admin_reportes" class="nav-link">
+                    <i class="bi bi-graph-up"></i> Reportes
                 </a>
             </li>
             

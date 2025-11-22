@@ -84,14 +84,30 @@ class AdminUsuariosController {
                 header('Location: ?page=admin_usuarios'); exit;
             }
             
-            // --- ACCIÓN C: Reactivar Vendedor (La incluyo por si acaso) ---
+            // --- ACCIÓN C: Reactivar Vendedor ---
              if (isset($_GET['reactivar_id'])) {
                  $id_a_reactivar = (int) $_GET['reactivar_id'];
-                 $rol_vendedor = self::ROL_VENDEDOR; // <-- Variable Creada
-                 $stmt_user = $this->conn->prepare("UPDATE usuarios SET estado = 'activo' WHERE id_usuario = ? AND id_rol = ?");
-                 $stmt_user->bind_param("ii", $id_a_reactivar, $rol_vendedor); // <-- ¡Variable USADA!
-                 $stmt_user->execute();
-                 $_SESSION['mensaje_exito'] = "Vendedor reactivado. (Sus productos deben reactivarse manualmente).";
+                 $rol_vendedor = self::ROL_VENDEDOR;
+                 
+                 $this->conn->begin_transaction();
+                 try {
+                     // 1. Reactivar al Vendedor
+                     $stmt_user = $this->conn->prepare("UPDATE usuarios SET estado = 'activo' WHERE id_usuario = ? AND id_rol = ?");
+                     $stmt_user->bind_param("ii", $id_a_reactivar, $rol_vendedor);
+                     $stmt_user->execute();
+                     
+                     // 2. Reactivar TODOS sus productos automáticamente
+                     $stmt_prods = $this->conn->prepare("UPDATE productos SET estado = 'activo' WHERE id_vendedor = ?");
+                     $stmt_prods->bind_param("i", $id_a_reactivar);
+                     $stmt_prods->execute();
+                     $productos_reactivados = $stmt_prods->affected_rows;
+                     
+                     $this->conn->commit();
+                     $_SESSION['mensaje_exito'] = "Vendedor reactivado exitosamente. " . $productos_reactivados . " producto(s) reactivado(s).";
+                 } catch (Exception $e) {
+                     $this->conn->rollback();
+                     $_SESSION['mensaje_error'] = "Error al reactivar vendedor: " . $e->getMessage();
+                 }
                  header('Location: ?page=admin_usuarios'); exit;
              }
 

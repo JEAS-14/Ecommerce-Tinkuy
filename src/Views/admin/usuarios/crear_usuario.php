@@ -27,6 +27,14 @@ body { background:#f8f9fa; }
         <li><a href="?page=admin_pedidos" class="nav-link"><i class="bi bi-list-check"></i> Pedidos</a></li>
         <li><a href="?page=admin_productos" class="nav-link"><i class="bi bi-box-seam-fill"></i> Productos</a></li>
         <li><a href="?page=admin_usuarios" class="nav-link active" aria-current="page"><i class="bi bi-people-fill"></i> Usuarios</a></li>
+            <li><a href="?page=admin_mensajes" class="nav-link"><i class="bi bi-envelope-fill"></i> Mensajes</a></li>
+            <li><a href="?page=admin_reportes" class="nav-link"><i class="bi bi-graph-up"></i> Reportes</a></li>
+        
+            <li class="nav-item mt-3 pt-3 border-top">
+                <a href="?page=index" class="nav-link">
+                    <i class="bi bi-globe"></i> Ver Tienda
+                </a>
+            </li>
     </ul>
     <hr>
     <div class="dropdown user-dropdown">
