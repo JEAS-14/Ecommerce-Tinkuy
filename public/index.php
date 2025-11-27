@@ -17,6 +17,8 @@ require_once BASE_PATH . '/src/Models/Mensaje.php';
 // 🎮 CONTROLADORES
 // Controladores de vendedor se requieren solo en sus rutas para evitar ejecución
 // inmediata al incluir el archivo (los controladores actuales ejecutan lógica al require).
+// Controlador de Mensajes (solo definición de clase, sin efectos secundarios)
+require_once BASE_PATH . '/src/Controllers/MensajesController.php';
 
 $base_url = "/Ecommerce-Tinkuy/public/index.php";
 $page = $_GET['page'] ?? 'index';
@@ -500,6 +502,21 @@ switch ($page) {
             break;
 
     /* =======================
+     * 📊 REPORTES ADMIN
+     * ======================= */
+    case 'admin_reportes':
+        require_once BASE_PATH . '/src/Controllers/ReportesController.php';
+        $reportesController = new ReportesController($conn);
+        $reportesController->index();
+        break;
+
+    case 'admin_reportes_generar':
+        require_once BASE_PATH . '/src/Controllers/ReportesController.php';
+        $reportesController = new ReportesController($conn);
+        $reportesController->generar();
+        break;
+
+    /* =======================
      * 🧩 MISCELÁNEO
      * ======================= */
     case 'deepseek_search':
@@ -543,6 +560,29 @@ switch ($page) {
         }
 
         require BASE_PATH . '/src/Views/misc/contact.php';
+        break;
+
+    /* =======================
+     * 📧 MENSAJES - ADMIN
+     * ======================= */
+    case 'admin_mensajes':
+        $controlador = new MensajesController($conn);
+        $datos = $controlador->listar();
+        extract($datos);
+        require BASE_PATH . '/src/Views/admin/mensajes/mensajes.php';
+        break;
+
+    case 'admin_ver_mensaje':
+        $id_mensaje = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+        if (!$id_mensaje) {
+            $_SESSION['mensaje_error'] = "ID de mensaje no válido.";
+            header('Location: ?page=admin_mensajes');
+            exit;
+        }
+        $controlador = new MensajesController($conn);
+        $datos = $controlador->ver($id_mensaje);
+        extract($datos);
+        require BASE_PATH . '/src/Views/admin/mensajes/ver.php';
         break;
 
     /* =======================
