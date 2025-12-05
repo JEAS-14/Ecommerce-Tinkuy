@@ -24,7 +24,7 @@
       "name": "Auth",
       "item": [
         {
-          "name": "Login - Usuario válido",
+          "name": "Login - Admin",
           "request": {
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/x-www-form-urlencoded"}],
@@ -32,8 +32,35 @@
             "body": {
               "mode": "urlencoded",
               "urlencoded": [
-                {"key": "email", "value": "vendedor@test.com"},
-                {"key": "password", "value": "123456"}
+                {"key": "usuario", "value": "admin"},
+                {"key": "clave", "value": "AdminTinkuy#2025"}
+              ]
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Redirección o 200', () => {",
+                "  pm.expect([200, 302]).to.include(pm.response.code);",
+                "});",
+                "const phpsessid = pm.cookies.get('PHPSESSID');",
+                "if (phpsessid) { pm.environment.set('session_cookie', phpsessid); }"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Login - Vendedor",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/x-www-form-urlencoded"}],
+            "url": "{{baseUrl}}?page=login",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {"key": "usuario", "value": "vendedor_juan"},
+                {"key": "clave", "value": "contraVendedorPro*55"}
               ]
             }
           },
