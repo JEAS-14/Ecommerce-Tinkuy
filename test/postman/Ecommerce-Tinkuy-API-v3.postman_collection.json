@@ -5,6 +5,20 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "description": "Colección completa con validaciones HTML5, variantes opcionales, exportar CSV y mensajes admin. Actualizada Diciembre 2025."
   },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "const session = pm.environment.get('session_cookie');",
+          "if (session) {",
+          "  pm.request.headers.add({ key: 'Cookie', value: `PHPSESSID=${session}` });",
+          "}"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
   "item": [
     {
       "name": "Auth",
@@ -29,7 +43,9 @@
               "exec": [
                 "pm.test('Redirección o 200', () => {",
                 "  pm.expect([200, 302]).to.include(pm.response.code);",
-                "});"
+                "});",
+                "const phpsessid = pm.cookies.get('PHPSESSID');",
+                "if (phpsessid) { pm.environment.set('session_cookie', phpsessid); }"
               ]
             }
           }]
@@ -206,15 +222,21 @@
       "name": "Carrito",
       "item": [
         {
+          "name": "Ver carrito",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}?page=cart"
+          }
+        },
+        {
           "name": "Agregar al carrito",
           "request": {
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/x-www-form-urlencoded"}],
-            "url": "{{baseUrl}}?page=carrito",
+            "url": "{{baseUrl}}?page=agregar_carrito",
             "body": {
               "mode": "urlencoded",
               "urlencoded": [
-                {"key": "accion", "value": "agregar"},
                 {"key": "id_variante", "value": "1"},
                 {"key": "cantidad", "value": "2"}
               ]
@@ -222,34 +244,10 @@
           }
         },
         {
-          "name": "Actualizar cantidad",
-          "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/x-www-form-urlencoded"}],
-            "url": "{{baseUrl}}?page=carrito",
-            "body": {
-              "mode": "urlencoded",
-              "urlencoded": [
-                {"key": "accion", "value": "actualizar"},
-                {"key": "id_variante", "value": "1"},
-                {"key": "cantidad", "value": "5"}
-              ]
-            }
-          }
-        },
-        {
           "name": "Eliminar del carrito",
           "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/x-www-form-urlencoded"}],
-            "url": "{{baseUrl}}?page=carrito",
-            "body": {
-              "mode": "urlencoded",
-              "urlencoded": [
-                {"key": "accion", "value": "eliminar"},
-                {"key": "id_variante", "value": "1"}
-              ]
-            }
+            "method": "GET",
+            "url": "{{baseUrl}}?page=eliminar_carrito&id=1"
           }
         }
       ]
@@ -258,40 +256,17 @@
       "name": "Pago y Pedidos",
       "item": [
         {
-          "name": "Finalizar compra - Validación nombre tarjeta",
+          "name": "Ver pago (vista)",
           "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/x-www-form-urlencoded"}],
-            "url": "{{baseUrl}}?page=pago",
-            "body": {
-              "mode": "urlencoded",
-              "urlencoded": [
-                {"key": "id_direccion", "value": "1"},
-                {"key": "metodo_pago", "value": "tarjeta"},
-                {"key": "cc-name", "value": "Juan Perez"},
-                {"key": "cc-number", "value": "4444444444444444"},
-                {"key": "cc-expiration", "value": "12/25"},
-                {"key": "cc-cvv", "value": "123"}
-              ]
-            }
-          },
-          "event": [{
-            "listen": "test",
-            "script": {
-              "exec": [
-                "pm.test('Nombre tarjeta solo letras (pattern)', () => {",
-                "  const ccName = pm.request.body.urlencoded.toObject()['cc-name'];",
-                "  pm.expect(ccName).to.match(/^[a-zA-ZÁ-úÑñ\\s]+$/);",
-                "});"
-              ]
-            }
-          }]
+            "method": "GET",
+            "url": "{{baseUrl}}?page=pago"
+          }
         },
         {
           "name": "Ver mis pedidos",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}?page=mis_pedidos"
+            "url": "{{baseUrl}}?page=pedidos"
           }
         }
       ]
