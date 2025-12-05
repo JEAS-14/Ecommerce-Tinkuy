@@ -120,9 +120,17 @@
                     <div class="card-body">
                         <form action="?page=admin_editar_producto&id=<?= $id_producto ?>" method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="accion" value="agregar_variante">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="producto_unico_admin" onchange="toggleVariantesAdmin()">
+                                    <label class="form-check-label" for="producto_unico_admin">
+                                        Este producto es de talla y color único (Ej: Artesanía, Instrumento)
+                                    </label>
+                                </div>
+                            </div>
                             <div class="row">
-                                <div class="col-md-6 mb-3"><label for="talla" class="form-label">Talla <span class="text-danger">*</span></label><input type="text" class="form-control" id="talla" name="talla" placeholder="Ej: M" required></div>
-                                <div class="col-md-6 mb-3"><label for="color" class="form-label">Color <span class="text-danger">*</span></label><input type="text" class="form-control" id="color" name="color" placeholder="Ej: Rojo" required></div>
+                                <div id="campo_talla_admin" class="col-md-6 mb-3"><label for="talla" class="form-label">Talla</label><input type="text" class="form-control" id="talla_admin" name="talla" placeholder="Ej: M"><small class="text-muted">Vacío = Única</small></div>
+                                <div id="campo_color_admin" class="col-md-6 mb-3"><label for="color" class="form-label">Color</label><input type="text" class="form-control" id="color_admin" name="color" placeholder="Ej: Rojo"><small class="text-muted">Vacío = Estándar</small></div>
                                 <div class="col-md-6 mb-3"><label for="precio" class="form-label">Precio (S/) <span class="text-danger">*</span></label><input type="number" step="0.01" class="form-control" id="precio" name="precio" placeholder="150.00" required></div>
                                 <div class="col-md-6 mb-3"><label for="stock" class="form-label">Stock <span class="text-danger">*</span></label><input type="number" class="form-control" id="stock" name="stock" placeholder="10" required></div>
                                 <div class="col-12 mb-3">
@@ -180,5 +188,30 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleVariantesAdmin() {
+            const checkbox = document.getElementById('producto_unico_admin');
+            const campoTalla = document.getElementById('campo_talla_admin');
+            const campoColor = document.getElementById('campo_color_admin');
+            const inputTalla = document.getElementById('talla_admin');
+            const inputColor = document.getElementById('color_admin');
+            
+            if (checkbox.checked) {
+                // Ocultar campos y establecer valores por defecto
+                campoTalla.style.display = 'none';
+                campoColor.style.display = 'none';
+                inputTalla.value = '';
+                inputColor.value = '';
+                inputTalla.disabled = true;
+                inputColor.disabled = true;
+            } else {
+                // Mostrar campos y habilitar
+                campoTalla.style.display = 'block';
+                campoColor.style.display = 'block';
+                inputTalla.disabled = false;
+                inputColor.disabled = false;
+            }
+        }
+    </script>
 </body>
 </html>

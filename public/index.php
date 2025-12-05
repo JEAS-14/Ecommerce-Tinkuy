@@ -596,5 +596,11 @@ switch ($page) {
 }
 
 // 🔚 Cierre de conexión
-$conn->close();
+if (isset($conn) && $conn instanceof mysqli) {
+    try {
+        @$conn->close();
+    } catch (Error $e) {
+        // Conexión ya cerrada, ignorar
+    }
+}
 ?>

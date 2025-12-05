@@ -178,7 +178,9 @@ class AdminProductosController {
                     $imagen_variante_nombre = null;
 
                     if ($precio===false || $stock===false || $precio<=0 || $stock<0) { throw new Exception("Precio/Stock inválidos."); }
-                    if (empty($talla) || empty($color)) { throw new Exception("Talla y color obligatorios."); }
+                    // Permitir vacío: aplicar valores por defecto
+                    $tallaFinal = ($talla === '' ? 'Única' : $talla);
+                    $colorFinal = ($color === '' ? 'Estándar' : $color);
 
                     // Lógica de Subida de Imagen
                     if (isset($_FILES['imagen_variante']) && $_FILES['imagen_variante']['error'] == UPLOAD_ERR_OK) {
@@ -201,10 +203,10 @@ class AdminProductosController {
                     $stmt_check_prop->execute();
                     $nombre_prod_temp = $stmt_check_prop->get_result()->fetch_assoc()['nombre_producto'];
                     $stmt_check_prop->close();
-                    $sku_simulado = strtoupper(substr($nombre_prod_temp, 0, 3)) . '-' . $id_producto . '-' . $talla . '-' . $color;
+                    $sku_simulado = strtoupper(substr($nombre_prod_temp, 0, 3)) . '-' . $id_producto . '-' . $tallaFinal . '-' . $colorFinal;
 
                     $stmt = $this->conn->prepare("INSERT INTO variantes_producto (id_producto, talla, color, sku, precio, stock, imagen_variante) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                    $stmt->bind_param("isssdis", $id_producto, $talla, $color, $sku_simulado, $precio, $stock, $imagen_variante_nombre);
+                    $stmt->bind_param("isssdis", $id_producto, $tallaFinal, $colorFinal, $sku_simulado, $precio, $stock, $imagen_variante_nombre);
                     if ($stmt->execute()) { $mensaje_exito = "Nueva variante agregada."; }
                     else { throw new Exception("Error al agregar variante: " . $this->conn->error); }
                     $stmt->close();

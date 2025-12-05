@@ -173,12 +173,15 @@ class VendedorController {
                     $stmt_variante = $this->conn->prepare("INSERT INTO variantes_producto (id_producto, talla, color, sku, precio, stock) VALUES (?, ?, ?, ?, ?, ?)");
                     
                     foreach ($_POST['variantes'] as $v) {
-                        if (empty($v['talla']) || empty($v['color']) || empty($v['precio']) || !isset($v['stock'])) {
+                        // Validar solo precio y stock (talla/color pueden estar vacíos)
+                        if (empty($v['precio']) || !isset($v['stock'])) {
                             continue; // Saltamos variantes incompletas
                         }
 
-                        $talla = trim($v['talla']);
-                        $color = trim($v['color']);
+                        $talla = isset($v['talla']) ? trim($v['talla']) : '';
+                        $color = isset($v['color']) ? trim($v['color']) : '';
+                        $tallaFinal = ($talla === '') ? 'Única' : $talla;
+                        $colorFinal = ($color === '') ? 'Estándar' : $color;
                         $precio = filter_var($v['precio'], FILTER_VALIDATE_FLOAT);
                         $stock = filter_var($v['stock'], FILTER_VALIDATE_INT);
                         
@@ -186,8 +189,8 @@ class VendedorController {
                             continue; // Saltamos variantes con datos inválidos
                         }
 
-                        $sku = strtoupper(substr($nombre, 0, 3)) . '-' . $id_producto . '-' . $talla . '-' . $color;
-                        $stmt_variante->bind_param("isssdi", $id_producto, $talla, $color, $sku, $precio, $stock);
+                        $sku = strtoupper(substr($nombre, 0, 3)) . '-' . $id_producto . '-' . $tallaFinal . '-' . $colorFinal;
+                        $stmt_variante->bind_param("isssdi", $id_producto, $tallaFinal, $colorFinal, $sku, $precio, $stock);
                         $stmt_variante->execute();
                     }
                     $stmt_variante->close();
@@ -339,10 +342,12 @@ class VendedorController {
                     $nombre_prod_temp = $res_check->fetch_assoc()['nombre_producto'];
                     $stmt_check_prop->close();
 
-                    $sku_simulado = strtoupper(substr($nombre_prod_temp, 0, 3)) . '-' . $id_producto . '-' . $talla . '-' . $color;
+                    $tallaFinal = ($talla === '' ? 'Única' : $talla);
+                    $colorFinal = ($color === '' ? 'Estándar' : $color);
+                    $sku_simulado = strtoupper(substr($nombre_prod_temp, 0, 3)) . '-' . $id_producto . '-' . $tallaFinal . '-' . $colorFinal;
 
                     $stmt = $this->conn->prepare("INSERT INTO variantes_producto (id_producto, talla, color, sku, precio, stock, imagen_variante) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                    $stmt->bind_param("isssdis", $id_producto, $talla, $color, $sku_simulado, $precio, $stock, $imagen_variante_nombre);
+                    $stmt->bind_param("isssdis", $id_producto, $tallaFinal, $colorFinal, $sku_simulado, $precio, $stock, $imagen_variante_nombre);
                     if ($stmt->execute()) { $mensaje_exito = "Nueva variante agregada."; }
                     else { throw new Exception("Error al agregar variante: " . $this->conn->error); }
                     $stmt->close();
