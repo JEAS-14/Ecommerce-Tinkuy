@@ -117,6 +117,16 @@ $mensaje_exito = $mensaje_exito ?? '';
                         </button>
                     </div>
                     <div class="card-body">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="checkProductoSinVariantes">
+                                <label class="form-check-label" for="checkProductoSinVariantes">
+                                    <strong>Sin variantes</strong>
+                                </label>
+                                <small class="text-muted d-block">Automáticamente usa Talla "Única" y Color "Estándar"</small>
+                            </div>
+                        </div>
+                        <hr>
                         <div id="variantes-container">
                             <!-- Las variantes se agregarán aquí dinámicamente -->
                         </div>
@@ -151,11 +161,11 @@ $mensaje_exito = $mensaje_exito ?? '';
                     </div>
                     <div class="row g-2">
                         <div class="col-6">
-                            <input type="text" class="form-control form-control-sm" name="variantes[${varianteCount}][talla]" 
+                            <input type="text" class="form-control form-control-sm talla-input" name="variantes[${varianteCount}][talla]" 
                                    placeholder="Talla" required>
                         </div>
                         <div class="col-6">
-                            <input type="text" class="form-control form-control-sm" name="variantes[${varianteCount}][color]" 
+                            <input type="text" class="form-control form-control-sm color-input" name="variantes[${varianteCount}][color]" 
                                    placeholder="Color" required>
                         </div>
                         <div class="col-6">
@@ -186,6 +196,42 @@ $mensaje_exito = $mensaje_exito ?? '';
         // Agregar una variante por defecto
         window.addEventListener('load', () => {
             agregarVariante();
+        });
+
+        // Auto-rellenar talla y color cuando se marca el checkbox
+        document.getElementById('checkProductoSinVariantes').addEventListener('change', function() {
+            const tallaInputs = document.querySelectorAll('.talla-input');
+            const colorInputs = document.querySelectorAll('.color-input');
+            
+            if (this.checked) {
+                // Checkbox marcado: auto-rellenar y quitar validación required
+                tallaInputs.forEach(input => {
+                    input.value = 'Única';
+                    input.readOnly = true;
+                    input.removeAttribute('required');
+                    input.classList.add('bg-light');
+                });
+                colorInputs.forEach(input => {
+                    input.value = 'Estándar';
+                    input.readOnly = true;
+                    input.removeAttribute('required');
+                    input.classList.add('bg-light');
+                });
+            } else {
+                // Checkbox desmarcado: limpiar y restaurar validación required
+                tallaInputs.forEach(input => {
+                    input.value = '';
+                    input.readOnly = false;
+                    input.setAttribute('required', 'required');
+                    input.classList.remove('bg-light');
+                });
+                colorInputs.forEach(input => {
+                    input.value = '';
+                    input.readOnly = false;
+                    input.setAttribute('required', 'required');
+                    input.classList.remove('bg-light');
+                });
+            }
         });
     </script>
 
@@ -265,15 +311,28 @@ $mensaje_exito = $mensaje_exito ?? '';
 
                             <h5 class="mt-4">2. Primera Variante (Inventario)</h5>
                             <p class="text-muted">Crearás el producto con esta primera variante. Luego podrás agregar más.</p>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="checkProductoSinVariantes">
+                                    <label class="form-check-label" for="checkProductoSinVariantes">
+                                        <strong>🎨 Producto sin variantes</strong> (artesanía, instrumento, objeto único)
+                                    </label>
+                                    <small class="text-muted d-block ms-4">Marca esta casilla si tu producto no tiene tallas ni colores específicos</small>
+                                </div>
+                            </div>
+                            
                             <hr>
                             <div class="row">
                                 <div class="col-md-3 mb-3">
                                     <label for="talla" class="form-label">Talla</label>
-                                    <input type="text" class="form-control" id="talla" name="talla" placeholder="Ej: M, L, Única" required>
+                                    <input type="text" class="form-control" id="talla" name="talla" placeholder="Ej: M, L, Única">
+                                    <small class="text-muted">Dejar vacío si es talla única.</small>
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label for="color" class="form-label">Color</label>
-                                    <input type="text" class="form-control" id="color" name="color" placeholder="Ej: Rojo, Azul, Multicolor" required>
+                                    <input type="text" class="form-control" id="color" name="color" placeholder="Ej: Rojo, Azul, Multicolor">
+                                    <small class="text-muted">Dejar vacío si es color natural/estándar.</small>
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label for="precio" class="form-label">Precio (S/)</label>
@@ -299,5 +358,28 @@ $mensaje_exito = $mensaje_exito ?? '';
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-rellenar talla y color cuando se marca el checkbox
+        document.getElementById('checkProductoSinVariantes').addEventListener('change', function() {
+            const tallaInput = document.getElementById('talla');
+            const colorInput = document.getElementById('color');
+            
+            if (this.checked) {
+                tallaInput.value = 'Única';
+                colorInput.value = 'Estándar';
+                tallaInput.readOnly = true;
+                colorInput.readOnly = true;
+                tallaInput.classList.add('bg-light');
+                colorInput.classList.add('bg-light');
+            } else {
+                tallaInput.value = '';
+                colorInput.value = '';
+                tallaInput.readOnly = false;
+                colorInput.readOnly = false;
+                tallaInput.classList.remove('bg-light');
+                colorInput.classList.remove('bg-light');
+            }
+        });
+    </script>
 </body>
 </html>-->
