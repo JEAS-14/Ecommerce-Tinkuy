@@ -59,8 +59,8 @@
             "body": {
               "mode": "urlencoded",
               "urlencoded": [
-                {"key": "email", "value": "vendedor@test.com"},
-                {"key": "password", "value": "123456"}
+                {"key": "usuario", "value": "vendedor_juan"},
+                {"key": "clave", "value": "contraVendedorPro*55"}
               ]
             }
           },
