@@ -5,6 +5,20 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "description": "Colección completa con validaciones HTML5, variantes opcionales, exportar CSV y mensajes admin. Actualizada Diciembre 2025."
   },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "const session = pm.environment.get('session_cookie');",
+          "if (session) {",
+          "  pm.request.headers.add({ key: 'Cookie', value: `PHPSESSID=${session}` });",
+          "}"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
   "item": [
     {
       "name": "Auth",
@@ -29,7 +43,9 @@
               "exec": [
                 "pm.test('Redirección o 200', () => {",
                 "  pm.expect([200, 302]).to.include(pm.response.code);",
-                "});"
+                "});",
+                "const phpsessid = pm.cookies.get('PHPSESSID');",
+                "if (phpsessid) { pm.environment.set('session_cookie', phpsessid); }"
               ]
             }
           }]
