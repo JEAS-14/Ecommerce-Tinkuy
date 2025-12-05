@@ -74,12 +74,18 @@ unset($_SESSION['mensaje_error'], $_SESSION['mensaje_exito']);
                                 <div class="col-md-6 mb-3">
                                     <label for="nombre" class="form-label">Nombre(s) <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="nombre" name="nombre"
-                                           value="<?= htmlspecialchars($datos_perfil['nombre']) ?>" required>
+                                           value="<?= htmlspecialchars($datos_perfil['nombre']) ?>" 
+                                           pattern="^[a-zA-ZÁÉÍÓÚáéíóúÑñ\s]+$" 
+                                           title="Solo se permiten letras y espacios" 
+                                           minlength="2" maxlength="50" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="apellido" class="form-label">Apellido(s) <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="apellido" name="apellido"
-                                           value="<?= htmlspecialchars($datos_perfil['apellido']) ?>" required>
+                                           value="<?= htmlspecialchars($datos_perfil['apellido']) ?>" 
+                                           pattern="^[a-zA-ZÁÉÍÓÚáéíóúÑñ\s]+$" 
+                                           title="Solo se permiten letras y espacios" 
+                                           minlength="2" maxlength="50" required>
                                 </div>
                             </div>
 
@@ -87,20 +93,27 @@ unset($_SESSION['mensaje_error'], $_SESSION['mensaje_exito']);
                                 <label for="telefono" class="form-label">Teléfono de Contacto (Opcional)</label>
                                 <input type="tel" class="form-control" id="telefono" name="telefono"
                                        value="<?= htmlspecialchars($datos_perfil['telefono']) ?>"
-                                       placeholder="+51 987654321" pattern="^\+?[0-9\s-]{7,15}$"
-                                       title="Formato de teléfono no válido. Use solo números y opcionalmente '+', espacios o guiones.">
-                                <div class="form-text">Ej: +51 987654321 o 987654321 (Máx 15 caracteres)</div>
+                                       placeholder="987654321" pattern="^[0-9]{9}$"
+                                       title="Solo se permiten 9 dígitos numéricos" maxlength="9">
+                                <div class="form-text">Ej: 987654321 (9 dígitos)</div>
                             </div>
 
                             <hr>
                             <h5 class="mt-4">Datos de tu Tienda (Opcional)</h5>
                             <div class="mb-3">
                                 <label for="nombre_tienda" class="form-label">Nombre de tu Tienda</label>
-                                <input type="text" class="form-control" id="nombre_tienda" name="nombre_tienda">
+                                <input type="text" class="form-control" id="nombre_tienda" name="nombre_tienda"
+                                       pattern="^[a-zA-Z0-9ÁÉÍÓÚáéíóúÑñ\s&'-]{3,50}$"
+                                       title="Solo letras, números, espacios y caracteres: & ' -"
+                                       minlength="3" maxlength="50">
+                                <div class="form-text">Entre 3 y 50 caracteres. Ej: Artesanías Don Juan</div>
                             </div>
                              <div class="mb-3">
                                 <label for="descripcion_tienda" class="form-label">Descripción Breve</label>
-                                <textarea class="form-control" id="descripcion_tienda" name="descripcion_tienda" rows="3"></textarea>
+                                <textarea class="form-control" id="descripcion_tienda" name="descripcion_tienda" rows="3"
+                                          minlength="10" maxlength="200" 
+                                          title="Descripción entre 10 y 200 caracteres"></textarea>
+                                <div class="form-text">Entre 10 y 200 caracteres</div>
                             </div>
 
                             <button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i> Guardar Cambios</button>
@@ -117,5 +130,30 @@ unset($_SESSION['mensaje_error'], $_SESSION['mensaje_exito']);
     ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Validaciones en tiempo real
+        const nombre = document.getElementById('nombre');
+        const apellido = document.getElementById('apellido');
+        const telefono = document.getElementById('telefono');
+
+        // Solo letras para nombre y apellido
+        [nombre, apellido].forEach(input => {
+            input.addEventListener('input', function() {
+                const regex = /^[a-zA-ZÁÉÍÓÚáéíóúÑñ\s]*$/;
+                if (!regex.test(this.value)) {
+                    alert('Solo se permiten letras y espacios');
+                    this.value = this.value.replace(/[^a-zA-ZÁÉÍÓÚáéíóúÑñ\s]/g, '');
+                }
+            });
+        });
+
+        // Solo números para teléfono
+        telefono.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length > 9) {
+                this.value = this.value.slice(0, 9);
+            }
+        });
+    </script>
 </body>
 </html>

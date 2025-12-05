@@ -50,7 +50,6 @@ switch ($page) {
         session_destroy();
         header("Location: " . $base_url . "?page=index");
         exit;
-        break;
 
     case 'forgot_password':
         require BASE_PATH . '/src/Views/auth/forgot_password.php';
@@ -213,7 +212,7 @@ switch ($page) {
             header("Location: $base_url?page=index");
             exit;
         }
-        break;
+       
 
     case 'eliminar_carrito':
         if (isset($_GET['id']) && filter_var($_GET['id'], FILTER_VALIDATE_INT)) {
@@ -229,7 +228,6 @@ switch ($page) {
         }
         header("Location: $base_url?page=cart");
         exit;
-        break;
 
     /* =======================
      * 🧾 PEDIDOS
@@ -375,6 +373,40 @@ switch ($page) {
         
         require BASE_PATH . '/src/Views/vendedor/ventas/ventas.php';
         break;
+
+    case 'vendedor_ventas_csv':
+        require_once BASE_PATH . '/src/Controllers/VentasController.php';
+        $ventasController = new VentasController($conn);
+        $items_vendidos = $ventasController->listarVentasCompletadas($_SESSION['usuario_id']);
+        
+        // Generar CSV
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="ventas_' . date('Y-m-d') . '.csv"');
+        
+        $output = fopen('php://output', 'w');
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM para UTF-8
+        
+        // Encabezados
+        fputcsv($output, ['Pedido #', 'Fecha', 'Producto', 'Talla', 'Color', 'Cantidad', 'Subtotal', 'Empresa Envío', 'Número Seguimiento', 'Estado']);
+        
+        // Datos
+        foreach ($items_vendidos as $item) {
+            fputcsv($output, [
+                $item['id_pedido'],
+                date('d/m/Y', strtotime($item['fecha_pedido'])),
+                $item['nombre_producto'],
+                $item['talla'],
+                $item['color'],
+                $item['cantidad'],
+                number_format($item['subtotal'], 2),
+                $item['nombre_empresa'] ?? 'N/A',
+                $item['numero_seguimiento'] ?? 'N/A',
+                VentasController::obtenerNombreEstado($item['id_estado_detalle'])
+            ]);
+        }
+        
+        fclose($output);
+        exit;
 
     case 'vendedor_envios':
         require_once BASE_PATH . '/src/Controllers/VendedorController.php';

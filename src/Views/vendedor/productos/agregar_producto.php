@@ -10,7 +10,7 @@ $mensaje_exito = $mensaje_exito ?? '';
 ?>
 
 <!DOCTYPE html>
-<html lang="es">
+<h lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,12 +59,12 @@ $mensaje_exito = $mensaje_exito ?? '';
                     <div class="card-body">
                         <div class="mb-3">
                             <label for="nombre_producto" class="form-label">Nombre del Producto <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="nombre_producto" name="nombre_producto" required>
+                            <input type="text" class="form-control" id="nombre_producto" name="nombre_producto" minlength="10" maxlength="60" title="El nombre debe tener entre 10 y 100 caracteres" required>
                         </div>
 
                         <div class="mb-3">
                             <label for="descripcion" class="form-label">Descripción</label>
-                            <textarea class="form-control" id="descripcion" name="descripcion" rows="4"></textarea>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="4" minlength="10" title="La descripción es muy corta (mínimo 10 caracteres)"></textarea>
                         </div>
 
                         <div class="mb-3">
@@ -112,7 +112,7 @@ $mensaje_exito = $mensaje_exito ?? '';
                 <div class="card shadow-sm">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">Variantes</h5>
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="agregarVariante()">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarVariante" onclick="agregarVariante()">
                             <i class="bi bi-plus-circle"></i> Agregar
                         </button>
                     </div>
@@ -121,7 +121,7 @@ $mensaje_exito = $mensaje_exito ?? '';
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="checkProductoSinVariantes">
                                 <label class="form-check-label" for="checkProductoSinVariantes">
-                                    <strong>Sin variantes</strong>
+                                    <strong>🎨 Sin variantes</strong>
                                 </label>
                                 <small class="text-muted d-block">Automáticamente usa Talla "Única" y Color "Estándar"</small>
                             </div>
@@ -162,19 +162,19 @@ $mensaje_exito = $mensaje_exito ?? '';
                     <div class="row g-2">
                         <div class="col-6">
                             <input type="text" class="form-control form-control-sm talla-input" name="variantes[${varianteCount}][talla]" 
-                                   placeholder="Talla" required>
+                                   placeholder="Talla" pattern="^[a-zA-Z\s]+$" title="Formato inválido: Solo se permiten letras y espacios" required>
                         </div>
                         <div class="col-6">
                             <input type="text" class="form-control form-control-sm color-input" name="variantes[${varianteCount}][color]" 
-                                   placeholder="Color" required>
+                                   placeholder="Color" pattern="^[a-zA-Z\s]+$" title="Formato inválido: Solo se permiten letras y espacios" required>
                         </div>
                         <div class="col-6">
-                            <input type="number" step="0.01" class="form-control form-control-sm" name="variantes[${varianteCount}][precio]" 
-                                   placeholder="Precio" required>
+                            <input type="number" step="0.01" min="0.01" class="form-control form-control-sm precio-input" name="variantes[${varianteCount}][precio]" 
+                                   placeholder="Precio" title="El precio debe ser mayor a 0" required>
                         </div>
                         <div class="col-6">
-                            <input type="number" class="form-control form-control-sm" name="variantes[${varianteCount}][stock]" 
-                                   placeholder="Stock" required>
+                            <input type="number" step="1" min="1" class="form-control form-control-sm stock-input" name="variantes[${varianteCount}][stock]" 
+                                   placeholder="Stock" title="El stock debe ser un número entero" required>
                         </div>
                     </div>
                 </div>
@@ -202,6 +202,7 @@ $mensaje_exito = $mensaje_exito ?? '';
         document.getElementById('checkProductoSinVariantes').addEventListener('change', function() {
             const tallaInputs = document.querySelectorAll('.talla-input');
             const colorInputs = document.querySelectorAll('.color-input');
+            const btnAgregar = document.getElementById('btnAgregarVariante');
             
             if (this.checked) {
                 // Checkbox marcado: auto-rellenar y quitar validación required
@@ -209,28 +210,72 @@ $mensaje_exito = $mensaje_exito ?? '';
                     input.value = 'Única';
                     input.readOnly = true;
                     input.removeAttribute('required');
+                    input.removeAttribute('pattern');
                     input.classList.add('bg-light');
                 });
                 colorInputs.forEach(input => {
                     input.value = 'Estándar';
                     input.readOnly = true;
                     input.removeAttribute('required');
+                    input.removeAttribute('pattern');
                     input.classList.add('bg-light');
                 });
+                // Desactivar botón agregar variantes
+                btnAgregar.disabled = true;
+                btnAgregar.classList.add('disabled');
             } else {
                 // Checkbox desmarcado: limpiar y restaurar validación required
                 tallaInputs.forEach(input => {
                     input.value = '';
                     input.readOnly = false;
                     input.setAttribute('required', 'required');
+                    input.setAttribute('pattern', '^[a-zA-Z\\s]+$');
                     input.classList.remove('bg-light');
                 });
                 colorInputs.forEach(input => {
                     input.value = '';
                     input.readOnly = false;
                     input.setAttribute('required', 'required');
+                    input.setAttribute('pattern', '^[a-zA-Z\\s]+$');
                     input.classList.remove('bg-light');
                 });
+                // Reactivar botón agregar variantes
+                btnAgregar.disabled = false;
+                btnAgregar.classList.remove('disabled');
+            }
+        });
+
+        // Validaciones en vivo
+        const variantesContainer = document.getElementById('variantes-container');
+
+        variantesContainer.addEventListener('input', (e) => {
+            const target = e.target;
+
+            if (target.classList.contains('talla-input') || target.classList.contains('color-input')) {
+                const regex = /^[a-zA-Z\s]*$/;
+                if (!regex.test(target.value)) {
+                    alert('Formato inválido: Solo se permiten letras y espacios');
+                    target.value = target.value.replace(/[^a-zA-Z\s]/g, '');
+                }
+            }
+
+            if (target.classList.contains('precio-input')) {
+                const val = parseFloat(target.value);
+                if (target.value !== '' && (isNaN(val) || val <= 0)) {
+                    alert('El precio debe ser mayor a 0');
+                    target.value = '';
+                }
+            }
+
+            if (target.classList.contains('stock-input')) {
+                if (target.value !== '' && !Number.isInteger(Number(target.value))) {
+                    alert('El stock debe ser un número entero');
+                    target.value = Math.max(1, Math.floor(Number(target.value)));
+                }
+                if (target.value !== '' && Number(target.value) < 1) {
+                    alert('El stock debe ser un número entero');
+                    target.value = 1;
+                }
             }
         });
     </script>
@@ -238,148 +283,3 @@ $mensaje_exito = $mensaje_exito ?? '';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
-
-
-
-
- <!--<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agregar Producto - Panel Vendedor</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
-</head>
-<body>
-    
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="dashboard.php">Panel Vendedor</a> <div class="collapse navbar-collapse">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="productos.php">Mis Productos</a></li> <li class="nav-item"><a class="nav-link active" href="agregar_producto.php">Agregar Producto</a></li> </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item"><a class="nav-link" href="../../logout.php">Cerrar Sesión</a></li> </ul>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container my-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <h2>Agregar Nuevo Producto</h2>
-                <p>Crea el producto general y su primera variante (talla, color, precio y stock).</p>
-                
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        
-                        <?php if (!empty($mensaje_error)): ?>
-                            <div class="alert alert-danger alert-error-animated"><?= htmlspecialchars($mensaje_error) ?></div>
-                        <?php endif; ?>
-                        <?php if (!empty($mensaje_exito)): ?>
-                            <div class="alert alert-success"><?= htmlspecialchars($mensaje_exito) ?></div>
-                        <?php endif; ?>
-
-                        <form method="POST" enctype="multipart/form-data" novalidate>
-                            
-                            <h5 class="mt-3">1. Información General del Producto</h5>
-                            <hr>
-                            <div class="mb-3">
-                                <label for="nombre_producto" class="form-label">Nombre del Producto</label>
-                                <input type="text" class="form-control" id="nombre_producto" name="nombre_producto" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="descripcion" class="form-label">Descripción</label>
-                                <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="id_categoria" class="form-label">Categoría</label>
-                                    <select class="form-select" id="id_categoria" name="id_categoria" required>
-                                        <option value="" disabled selected>Elige una categoría...</option>
-                                        <?php foreach ($categorias as $cat): ?>
-                                            <option value="<?= $cat['id_categoria'] ?>"><?= htmlspecialchars($cat['nombre_categoria']) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="imagen_principal" class="form-label">Imagen Principal</label>
-                                    <input type="file" class="form-control" id="imagen_principal" name="imagen_principal" accept="image/jpeg, image/png, image/webp" required>
-                                </div>
-                            </div>
-
-                            <h5 class="mt-4">2. Primera Variante (Inventario)</h5>
-                            <p class="text-muted">Crearás el producto con esta primera variante. Luego podrás agregar más.</p>
-                            
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="checkProductoSinVariantes">
-                                    <label class="form-check-label" for="checkProductoSinVariantes">
-                                        <strong>🎨 Producto sin variantes</strong> (artesanía, instrumento, objeto único)
-                                    </label>
-                                    <small class="text-muted d-block ms-4">Marca esta casilla si tu producto no tiene tallas ni colores específicos</small>
-                                </div>
-                            </div>
-                            
-                            <hr>
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label for="talla" class="form-label">Talla</label>
-                                    <input type="text" class="form-control" id="talla" name="talla" placeholder="Ej: M, L, Única">
-                                    <small class="text-muted">Dejar vacío si es talla única.</small>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="color" class="form-label">Color</label>
-                                    <input type="text" class="form-control" id="color" name="color" placeholder="Ej: Rojo, Azul, Multicolor">
-                                    <small class="text-muted">Dejar vacío si es color natural/estándar.</small>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="precio" class="form-label">Precio (S/)</label>
-                                    <input type="number" step="0.01" class="form-control" id="precio" name="precio" placeholder="Ej: 150.00" required>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="stock" class="form-label">Stock (Cantidad)</label>
-                                    <input type="number" class="form-control" id="stock" name="stock" placeholder="Ej: 10" required>
-                                </div>
-                            </div>
-
-                            <div class="d-grid mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="bi bi-plus-circle"></i> Crear Producto y Variante
-                                </button>
-                            </div>
-
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Auto-rellenar talla y color cuando se marca el checkbox
-        document.getElementById('checkProductoSinVariantes').addEventListener('change', function() {
-            const tallaInput = document.getElementById('talla');
-            const colorInput = document.getElementById('color');
-            
-            if (this.checked) {
-                tallaInput.value = 'Única';
-                colorInput.value = 'Estándar';
-                tallaInput.readOnly = true;
-                colorInput.readOnly = true;
-                tallaInput.classList.add('bg-light');
-                colorInput.classList.add('bg-light');
-            } else {
-                tallaInput.value = '';
-                colorInput.value = '';
-                tallaInput.readOnly = false;
-                colorInput.readOnly = false;
-                tallaInput.classList.remove('bg-light');
-                colorInput.classList.remove('bg-light');
-            }
-        });
-    </script>
-</body>
-</html>-->

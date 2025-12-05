@@ -32,9 +32,9 @@ $nombre_vendedor = $_SESSION['usuario'];
                 <h2 class="mb-0">Mi Historial de Ventas</h2>
                 <p class="text-muted">Aquí están todos los artículos que has enviado o han sido entregados.</p>
             </div>
-            <button class="btn btn-primary" disabled>
-                <i class="bi bi-download me-2"></i> Exportar CSV (Próximamente)
-            </button>
+            <a href="<?= $base_url ?>?page=vendedor_ventas_csv" class="btn btn-primary">
+                <i class="bi bi-download me-2"></i> Exportar CSV
+            </a>
         </div>
 
         <div class="card bg-success text-white mb-4 shadow-sm">
