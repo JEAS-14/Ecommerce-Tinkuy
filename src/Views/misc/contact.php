@@ -54,7 +54,7 @@ $pagina_actual = 'contacto'; // Para el navbar
                                     <label for="nombre" class="form-label">Tu Nombre</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-                                        <input type="text" class="form-control" id="nombre" name="nombre" value="<?= htmlspecialchars($nombre) ?>" placeholder="Ej: Juan Pérez" required>
+                                        <input type="text" class="form-control" id="nombre" name="nombre" value="<?= htmlspecialchars($nombre) ?>" placeholder="Ej: Juan Pérez" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" title="Solo se permiten letras y espacios" required>
                                     </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
@@ -69,8 +69,9 @@ $pagina_actual = 'contacto'; // Para el navbar
                                 <label for="asunto" class="form-label">Asunto</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bi bi-lightbulb-fill"></i></span>
-                                    <input type="text" class="form-control" id="asunto" name="asunto" value="<?= htmlspecialchars($asunto) ?>" placeholder="Duda sobre envíos, Devolución, etc." required>
+                                    <input type="text" class="form-control" id="asunto" name="asunto" value="<?= htmlspecialchars($asunto) ?>" placeholder="Duda sobre envíos, Devolución, etc." maxlength="30" required>
                                 </div>
+                                <small class="text-muted">Máximo 30 caracteres</small>
                             </div>
                             <div class="mb-3">
                                 <label for="mensaje" class="form-label">Mensaje</label>
@@ -95,5 +96,11 @@ $pagina_actual = 'contacto'; // Para el navbar
     ?>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Bloquear números y símbolos en el campo nombre
+        document.getElementById('nombre').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
+        });
+    </script>
 </body>
 </html>

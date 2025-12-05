@@ -247,8 +247,8 @@ $conn->close();
                     <div class="card-body">
                          <form action="<?= $base_url ?>?page=vendedor_editar_producto&id=<?= $id_producto ?>" method="POST">
                             <input type="hidden" name="accion" value="actualizar_producto">
-                            <div class="mb-3"><label for="nombre_producto" class="form-label">Nombre</label><input type="text" class="form-control" id="nombre_producto" name="nombre_producto" value="<?= htmlspecialchars($producto['nombre_producto']) ?>" required></div>
-                            <div class="mb-3"><label for="descripcion" class="form-label">Descripción</label><textarea class="form-control" id="descripcion" name="descripcion" rows="4"><?= htmlspecialchars($producto['descripcion']) ?></textarea></div>
+                            <div class="mb-3"><label for="nombre_producto" class="form-label">Nombre</label><input type="text" class="form-control" id="nombre_producto" name="nombre_producto" value="<?= htmlspecialchars($producto['nombre_producto']) ?>" minlength="10" maxlength="100" title="El nombre debe tener entre 10 y 100 caracteres" required></div>
+                            <div class="mb-3"><label for="descripcion" class="form-label">Descripción</label><textarea class="form-control" id="descripcion" name="descripcion" rows="4" minlength="10" title="La descripción es muy corta (mínimo 10 caracteres)"><?= htmlspecialchars($producto['descripcion']) ?></textarea></div>
                             <div class="mb-3">
                                 <label for="id_categoria" class="form-label">Categoría</label>
                                 <select class="form-select" id="id_categoria" name="id_categoria" required>
@@ -274,17 +274,18 @@ $conn->close();
                             <input type="hidden" name="accion" value="agregar_variante">
                             <div class="mb-3">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="producto_unico_edit" onchange="toggleVariantesEdit()">
+                                    <input class="form-check-input" type="checkbox" id="producto_unico_edit">
                                     <label class="form-check-label" for="producto_unico_edit">
-                                        Este producto es de talla y color único (Ej: Artesanía, Instrumento)
+                                        <strong>🎨 Sin variantes</strong>
                                     </label>
+                                    <small class="text-muted d-block">Automáticamente usa Talla "Única" y Color "Estándar"</small>
                                 </div>
                             </div>
                             <div class="row">
-                                <div id="campo_talla_edit" class="col-md-6 mb-3"><label for="talla" class="form-label">Talla</label><input type="text" class="form-control" id="talla_edit" name="talla" placeholder="Ej: M"><small class="text-muted">Vacío = Única</small></div>
-                                <div id="campo_color_edit" class="col-md-6 mb-3"><label for="color" class="form-label">Color</label><input type="text" class="form-control" id="color_edit" name="color" placeholder="Ej: Rojo"><small class="text-muted">Vacío = Estándar</small></div>
-                                <div class="col-md-6 mb-3"><label for="precio" class="form-label">Precio (S/) <span class="text-danger">*</span></label><input type="number" step="0.01" class="form-control" id="precio" name="precio" placeholder="150.00" required></div>
-                                <div class="col-md-6 mb-3"><label for="stock" class="form-label">Stock <span class="text-danger">*</span></label><input type="number" class="form-control" id="stock" name="stock" placeholder="10" required></div>
+                                <div class="col-md-6 mb-3"><label for="talla" class="form-label">Talla</label><input type="text" class="form-control" id="talla_edit" name="talla" placeholder="Ej: M" pattern="^[a-zA-Z\s]+$" title="Formato inválido: Solo se permiten letras y espacios"></div>
+                                <div class="col-md-6 mb-3"><label for="color" class="form-label">Color</label><input type="text" class="form-control" id="color_edit" name="color" placeholder="Ej: Rojo" pattern="^[a-zA-Z\s]+$" title="Formato inválido: Solo se permiten letras y espacios"></div>
+                                <div class="col-md-6 mb-3"><label for="precio" class="form-label">Precio (S/) <span class="text-danger">*</span></label><input type="number" step="0.01" min="0.01" class="form-control" id="precio" name="precio" placeholder="150.00" title="El precio debe ser mayor a 0" required></div>
+                                <div class="col-md-6 mb-3"><label for="stock" class="form-label">Stock <span class="text-danger">*</span></label><input type="number" step="1" min="1" class="form-control" id="stock" name="stock" placeholder="10" title="El stock debe ser un número entero" required></div>
                                 <div class="col-12 mb-3">
                                      <label for="imagen_variante" class="form-label">Imagen Específica (Opcional)</label>
                                      <input class="form-control" type="file" id="imagen_variante" name="imagen_variante" accept="image/jpeg, image/png, image/gif, image/webp">
@@ -447,29 +448,66 @@ $conn->close();
                             mostrarActivas.click();
                         });
 
-                        function toggleVariantesEdit() {
-                            const checkbox = document.getElementById('producto_unico_edit');
-                            const campoTalla = document.getElementById('campo_talla_edit');
-                            const campoColor = document.getElementById('campo_color_edit');
+                        // Auto-rellenar talla y color cuando se marca el checkbox
+                        document.getElementById('producto_unico_edit').addEventListener('change', function() {
                             const inputTalla = document.getElementById('talla_edit');
                             const inputColor = document.getElementById('color_edit');
                             
-                            if (checkbox.checked) {
-                                // Ocultar campos y establecer valores por defecto
-                                campoTalla.style.display = 'none';
-                                campoColor.style.display = 'none';
+                            if (this.checked) {
+                                inputTalla.value = 'Única';
+                                inputColor.value = 'Estándar';
+                                inputTalla.readOnly = true;
+                                inputColor.readOnly = true;
+                                inputTalla.removeAttribute('pattern');
+                                inputColor.removeAttribute('pattern');
+                                inputTalla.classList.add('bg-light');
+                                inputColor.classList.add('bg-light');
+                            } else {
                                 inputTalla.value = '';
                                 inputColor.value = '';
-                                inputTalla.disabled = true;
-                                inputColor.disabled = true;
-                            } else {
-                                // Mostrar campos y habilitar
-                                campoTalla.style.display = 'block';
-                                campoColor.style.display = 'block';
-                                inputTalla.disabled = false;
-                                inputColor.disabled = false;
+                                inputTalla.readOnly = false;
+                                inputColor.readOnly = false;
+                                inputTalla.setAttribute('pattern', '^[a-zA-Z\\s]+$');
+                                inputColor.setAttribute('pattern', '^[a-zA-Z\\s]+$');
+                                inputTalla.classList.remove('bg-light');
+                                inputColor.classList.remove('bg-light');
                             }
-                        }
+                        });
+
+                        // Validaciones en vivo
+                        const inputTalla = document.getElementById('talla_edit');
+                        const inputColor = document.getElementById('color_edit');
+                        const inputPrecio = document.getElementById('precio');
+                        const inputStock = document.getElementById('stock');
+
+                        [inputTalla, inputColor].forEach(input => {
+                            input.addEventListener('input', function() {
+                                const regex = /^[a-zA-Z\s]*$/;
+                                if (!regex.test(this.value)) {
+                                    alert('Formato inválido: Solo se permiten letras y espacios');
+                                    this.value = this.value.replace(/[^a-zA-Z\s]/g, '');
+                                }
+                            });
+                        });
+
+                        inputPrecio.addEventListener('input', function() {
+                            const val = parseFloat(this.value);
+                            if (this.value !== '' && (isNaN(val) || val <= 0)) {
+                                alert('El precio debe ser mayor a 0');
+                                this.value = '';
+                            }
+                        });
+
+                        inputStock.addEventListener('input', function() {
+                            if (this.value !== '' && !Number.isInteger(Number(this.value))) {
+                                alert('El stock debe ser un número entero');
+                                this.value = Math.max(1, Math.floor(Number(this.value)));
+                            }
+                            if (this.value !== '' && Number(this.value) < 1) {
+                                alert('El stock debe ser un número entero');
+                                this.value = 1;
+                            }
+                        });
                     </script>
                 </div>
             </div>

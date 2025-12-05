@@ -249,7 +249,10 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     <div class="row gy-3">
                         <div class="col-md-6">
                             <label for="cc-name" class="form-label">Nombre en la tarjeta</label>
-                            <input type="text" class="form-control" id="cc-name" placeholder="Juan Perez" required>
+                            <input type="text" class="form-control" id="cc-name" placeholder="Juan Perez" 
+                                   pattern="^[a-zA-ZÁÉÍÓÚáéíóúÑñ\s]+$" 
+                                   title="Solo se permiten letras y espacios" 
+                                   minlength="3" maxlength="50" required>
                         </div>
                         <div class="col-md-6">
                             <label for="cc-number" class="form-label">Número de tarjeta</label>
@@ -500,6 +503,16 @@ $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 }
                 return (sum % 10) === 0;
             }
+
+            // Validación: solo letras en nombre de tarjeta
+            const ccName = document.getElementById('cc-name');
+            ccName.addEventListener('input', function() {
+                const regex = /^[a-zA-ZÁÉÍÓÚáéíóúÑñ\s]*$/;
+                if (!regex.test(this.value)) {
+                    alert('Solo se permiten letras y espacios en el nombre');
+                    this.value = this.value.replace(/[^a-zA-ZÁÉÍÓÚáéíóúÑñ\s]/g, '');
+                }
+            });
         });
     </script>
 </body>
