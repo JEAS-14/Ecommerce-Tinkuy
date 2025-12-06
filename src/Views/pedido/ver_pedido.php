@@ -119,7 +119,7 @@ try {
                                                 <td>
                                                     <div class="d-flex align-items-center">
                                                         <?php if (!empty($imagen)): ?>
-                                                            <img src="/Ecommerce-Tinkuy/public/img/productos/<?= htmlspecialchars($imagen) ?>" 
+                                                            <img src="<?= IMG_PRODUCTOS_URL ?><?= htmlspecialchars($imagen) ?>" 
                                                                  alt="<?= htmlspecialchars($nombreProducto) ?>"
                                                                  class="img-thumbnail me-2" style="width: 50px; height: 50px; object-fit: cover;">
                                                         <?php endif; ?>

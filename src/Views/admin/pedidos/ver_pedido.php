@@ -126,17 +126,13 @@
                                        $estado_item_color = 'danger';
                                 }
 
-                                // --- LÓGICA DE IMAGEN (CORREGIDA) ---
                                 $imagen_src = '';
-                                // Esta es la ruta base a tus imágenes públicas
-                                $base_path_img = '/Ecommerce-Tinkuy/public/img/productos/'; 
-
                                 if (!empty($item['imagen_variante'])) {
-                                    $imagen_src = $base_path_img . 'variantes/' . htmlspecialchars($item['imagen_variante']);
+                                    $imagen_src = IMG_VARIANTES_URL . htmlspecialchars($item['imagen_variante']);
                                 } else if (!empty($item['imagen_principal'])) {
-                                    $imagen_src = $base_path_img . 'productos/' . htmlspecialchars($item['imagen_principal']);
+                                    $imagen_src = IMG_PRODUCTOS_URL . htmlspecialchars($item['imagen_principal']);
                                 } else {
-                                    $imagen_src = $base_path_img . 'placeholder.png'; // Fallback
+                                    $imagen_src = IMG_PRODUCTOS_URL . 'placeholder.png';
                                 }
                                 ?>
                                 <tr>

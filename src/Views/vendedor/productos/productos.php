@@ -84,7 +84,7 @@ $base_url = $base_url ?? '/Ecommerce-Tinkuy/public/index.php';
                                     <tr class="<?= ($producto['estado'] === 'inactivo') ? 'producto-inactivo' : '' ?>">
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <img src="/Ecommerce-Tinkuy/public/img/productos/<?= htmlspecialchars($producto['imagen_principal'] ?: 'default.png') ?>"
+                                                   <img src="<?= IMG_PRODUCTOS_URL ?><?= htmlspecialchars($producto['imagen_principal'] ?: 'default.png') ?>"
                                                      alt="Imagen de <?= htmlspecialchars($producto['nombre_producto']) ?>"
                                                      style="width: 60px; height: 60px; object-fit: cover;" class="rounded me-3">
                                                 <strong><?= htmlspecialchars($producto['nombre_producto']) ?></strong>
