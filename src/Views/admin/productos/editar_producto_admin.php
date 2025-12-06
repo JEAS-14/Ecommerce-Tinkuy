@@ -160,7 +160,7 @@
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <div class="d-flex align-items-center">
                                                 <?php if (!empty($v['imagen_variante'])): ?>
-                                                    <img src="/Ecommerce-Tinkuy/public/img/productos/variantes/<?= htmlspecialchars($v['imagen_variante']) ?>" alt="Variante" class="img-variante-thumb rounded me-2">
+                                                    <img src="<?= IMG_VARIANTES_URL ?><?= htmlspecialchars($v['imagen_variante']) ?>" alt="Variante" class="img-variante-thumb rounded me-2">
                                                 <?php else: ?>
                                                     <div class="img-variante-placeholder me-2"><i class="bi bi-image text-muted"></i></div>
                                                 <?php endif; ?>

@@ -340,7 +340,7 @@ $conn->close();
                                                 <div class="card-body">
                                                     <div class="d-flex mb-3">
                                                         <?php if (!empty($v['imagen_variante'])): ?>
-                                                            <img src="/Ecommerce-Tinkuy/public/img/productos/variantes/<?= htmlspecialchars($v['imagen_variante']) ?>" 
+                                                            <img src="<?= IMG_VARIANTES_URL ?><?= htmlspecialchars($v['imagen_variante']) ?>" 
                                                                  alt="Variante" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
                                                         <?php else: ?>
                                                             <div class="me-3 bg-light rounded d-flex align-items-center justify-content-center" 
@@ -390,7 +390,7 @@ $conn->close();
                                                 <div class="card-body">
                                                     <div class="d-flex mb-3">
                                                         <?php if (!empty($v['imagen_variante'])): ?>
-                                                            <img src="/Ecommerce-Tinkuy/public/img/productos/variantes/<?= htmlspecialchars($v['imagen_variante']) ?>" 
+                                                            <img src="<?= IMG_VARIANTES_URL ?><?= htmlspecialchars($v['imagen_variante']) ?>" 
                                                                  alt="Variante" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
                                                         <?php else: ?>
                                                             <div class="me-3 bg-light rounded d-flex align-items-center justify-content-center" 

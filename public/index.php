@@ -5,6 +5,15 @@
 session_start();
 define('BASE_PATH', dirname(__DIR__));
 
+// Detect base path dynamically so assets work regardless of folder name
+$public_dir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+$public_dir = rtrim($public_dir, '/');
+$base_public_path = $public_dir === '' ? '' : $public_dir;
+
+define('BASE_PUBLIC_PATH', $base_public_path);
+define('IMG_PRODUCTOS_URL', BASE_PUBLIC_PATH . '/img/productos/');
+define('IMG_VARIANTES_URL', BASE_PUBLIC_PATH . '/img/productos/variantes/');
+
 // 🧠 CORE: conexión y validaciones
 require_once BASE_PATH . '/src/Core/db.php';
 require_once BASE_PATH . '/src/Core/validaciones.php';
@@ -20,7 +29,7 @@ require_once BASE_PATH . '/src/Models/Mensaje.php';
 // Controlador de Mensajes (solo definición de clase, sin efectos secundarios)
 require_once BASE_PATH . '/src/Controllers/MensajesController.php';
 
-$base_url = "/Ecommerce-Tinkuy/public/index.php";
+$base_url = BASE_PUBLIC_PATH . '/index.php';
 $page = $_GET['page'] ?? 'index';
 
 // 🧭 RUTEO PRINCIPAL
@@ -104,8 +113,8 @@ switch ($page) {
         $variantes = $modeloProducto->getVariantesActivasPorId($conn, $id_producto);
         $variantes_json = json_encode($variantes);
 
-        $ruta_base_principal = "/Ecommerce-Tinkuy/public/img/productos/";
-        $ruta_base_variantes = "/Ecommerce-Tinkuy/public/img/productos/variantes/";
+        $ruta_base_principal = IMG_PRODUCTOS_URL;
+        $ruta_base_variantes = IMG_VARIANTES_URL;
         $imagen_mostrada_inicial = htmlspecialchars($producto['imagen_principal']);
 
         require BASE_PATH . '/src/Views/producto/producto.php';
